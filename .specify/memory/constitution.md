@@ -154,8 +154,6 @@ The application MUST implement comprehensive observability through structured lo
 - **WebSocket Client**: Centrifuge.js (`centrifuge`)
 - **Game Rendering**: Pixi.js 7+
 - **Wallet Integration**: TON Connect (`@tonconnect/ui-react`)
-- **Routing**: React Router 6+ (`react-router-dom`)
-- **Testing**: Vitest + React Testing Library
 
 ### Infrastructure
 
