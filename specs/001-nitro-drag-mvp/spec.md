@@ -203,6 +203,15 @@ If all alive players lock their scores before the engine crashes or timer expire
 
 ## Requirements *(mandatory)*
 
+### Technical Constraints
+
+- **TC-001**: Application MUST be built using Telegram Mini Apps SDK (official) for native integration and TON Connect support
+- **TC-002**: Frontend MUST leverage Telegram WebApp API for UI components and platform features
+- **TC-003**: Backend MUST use centralized Golang server for core game logic and economy safety
+- **TC-004**: Real-time race state synchronization MUST use Centrifugo for WebSocket/SSE-based pub-sub messaging
+- **TC-005**: Persistent storage MUST use PostgreSQL for transactional data (player accounts, match history, economy transactions)
+- **TC-006**: Volatile storage MUST use Redis for real-time state (active races, matchmaking queues, session data)
+
 ### Functional Requirements
 
 **Core Gameplay**
@@ -219,6 +228,9 @@ If all alive players lock their scores before the engine crashes or timer expire
 - **FR-010**: System MUST rank players 1-10 by total score at match end
 - **FR-010a**: When two or more players have identical total scores, system MUST use Heat 3 score as first tiebreaker (higher wins), then Heat 2 score if needed, then Heat 1 score if needed
 - **FR-011**: Crash timing and outcomes MUST be consistent and verifiable across all players (no client manipulation possible)
+- **FR-011a**: Server MUST generate crash point for each heat using cryptographic seed (pre-committed hash) before heat starts
+- **FR-011b**: Crash point MUST be verifiable by players after heat completion (seed + hash reveal for provable fairness)
+- **FR-011c**: Crash timing MUST follow uniform random distribution where t ∈ [0, 25] seconds has equal probability
 
 **Target Line Mechanic**
 
@@ -349,6 +361,16 @@ If all alive players lock their scores before the engine crashes or timer expire
 - **Prize Pool**: Represents the economic distribution of a match with total buy-ins, rake (8%), 1st place prize (50% of remaining), 2nd place prize (30%), 3rd place prize (20%)
 - **Transaction**: Represents a FUEL or TON currency movement with transaction type (buy-in, prize, deposit, withdrawal), amount, timestamp, status (pending/confirmed/failed)
 - **Standings**: Represents the intermediate ranking state after each heat with player position (1-10), total score (sum of completed heats), position delta vs previous heat (↑ ↓ =)
+
+## Clarifications
+
+### Session 2026-01-28
+
+- Q: Tech stack for Telegram Mini App implementation? → A: Telegram Mini Apps SDK (official)
+- Q: Backend architecture for race state synchronization and matchmaking? → A: Centralized Golang server with Centrifugo
+- Q: Database and storage solution for player state, match history, and Ghost replays? → A: PostgreSQL + Redis
+- Q: How is crash timing determined to ensure fairness and verifiability? → A: Server generates crash point using cryptographic seed (pre-committed hash)
+- Q: What probability distribution should determine when crashes occur within the 25-second window? → A: Uniform random distribution
 
 ## Success Criteria *(mandatory)*
 
