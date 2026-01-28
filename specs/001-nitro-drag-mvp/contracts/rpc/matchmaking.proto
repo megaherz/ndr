@@ -1,0 +1,53 @@
+// Matchmaking RPC Data Contracts
+// 
+// These message types are JSON-encoded and sent in the `data` field of RPCRequest/RPCResponse
+// when client calls: centrifuge.rpc('matchmaking.join', {...})
+//
+// Flow:
+//   1. Client: centrifuge.rpc('matchmaking.join', {league: 'STREET', client_req_id: '...'})
+//   2. Centrifugo → Backend gRPC: CentrifugoProxy.RPC(method='matchmaking.join', data=<JSON bytes>)
+//   3. Backend: Unmarshal data → JoinMatchmakingRequest, process, return JoinMatchmakingResponse
+//   4. Centrifugo → Client: RPC response with result data
+syntax = "proto3";
+
+package matchmaking;
+
+option go_package = "github.com/ndr/backend/proto/matchmaking";
+
+// ===============================================
+// Matchmaking: Join Queue
+// ===============================================
+
+message JoinMatchmakingRequest {
+  string league = 1;              // ROOKIE, STREET, PRO, TOP_FUEL
+  string client_req_id = 2;       // Client-provided idempotency key (UUID)
+}
+
+message JoinMatchmakingResponse {
+  string queue_ticket_id = 1;     // Ticket identifier for this queue entry
+  string status = 2;              // QUEUED
+  int32 estimated_wait_seconds = 3; // Estimated wait time (up to 20s)
+}
+
+// Error codes:
+// - INSUFFICIENT_BALANCE: User balance < league buy-in
+// - ROOKIE_LIMIT_REACHED: User completed 5 Rookie races (only for ROOKIE league)
+// - ALREADY_IN_QUEUE: User already has active queue ticket
+// - DUPLICATE_REQUEST: client_req_id already processed
+
+// ===============================================
+// Matchmaking: Cancel Queue
+// ===============================================
+
+message CancelMatchmakingRequest {
+  string queue_ticket_id = 1;     // Ticket to cancel
+  string client_req_id = 2;       // Idempotency key
+}
+
+message CancelMatchmakingResponse {
+  string status = 1;              // CANCELLED
+}
+
+// Error codes:
+// - TICKET_NOT_FOUND: queue_ticket_id does not exist or already processed
+// - MATCH_ALREADY_FORMED: Too late to cancel (match in progress)
