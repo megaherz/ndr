@@ -1,50 +1,219 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+SYNC IMPACT REPORT
+==================
+Version Change: NONE → 1.0.0
+Change Type: MAJOR (Initial Constitution)
+
+Modified Principles:
+- NEW: I. Golang Style Guide (NON-NEGOTIABLE)
+- NEW: II. Git Commit Policy (NON-NEGOTIABLE)
+- NEW: III. React + TypeScript Technology Stack (NON-NEGOTIABLE)
+- NEW: IV. Real-Time Communication Architecture
+- NEW: V. Modular Service Architecture
+- NEW: VI. Data Layer Standards
+- NEW: VII. Observability and Metrics
+
+Added Sections:
+- Technology Stack (comprehensive backend/frontend/infrastructure stack)
+- Development Workflow (code review, quality gates, testing, metrics requirements)
+
+Removed Sections: None
+
+Templates Requiring Updates:
+- ✅ .specify/templates/plan-template.md - Constitution Check section references this file
+- ✅ .specify/templates/spec-template.md - Requirements section aligns with principles
+- ✅ .specify/templates/tasks-template.md - Task structure compatible with modular architecture
+- ✅ .specify/templates/checklist-template.md - Generic template, no changes needed
+
+Follow-up TODOs: None - all placeholders filled
+==================
+-->
+
+# NDR Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Golang Style Guide (NON-NEGOTIABLE)
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+All Go code MUST follow the Uber Go Style Guide: https://github.com/uber-go/guide/blob/master/style.md
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+This includes but is not limited to:
+- Package naming conventions
+- Interface design principles
+- Error handling patterns
+- Testing standards
+- Code organization and structure
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+**Rationale**: Consistent style ensures code readability, maintainability, and reduces cognitive load when switching between codebases. The Uber Go Style Guide is a well-established, comprehensive guide that promotes best practices for production Go code.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+#### Database Operations
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+For database INSERT operations, prefer `sqlx.NamedExecContext` over `sqlx.ExecContext` when inserting struct data.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+**Rationale**: `NamedExecContext` provides better readability, type safety, and maintainability by using named parameters that map directly to struct fields. This reduces the risk of parameter ordering errors and makes code more self-documenting.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+#### HTTP Routing
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+All HTTP routing MUST use Chi router (`github.com/go-chi/chi/v5`). Routes MUST be organized using Chi's route grouping features for logical API structure.
+
+**Rationale**: Chi provides superior route organization, built-in middleware ecosystem, and better performance compared to standard `net/http` ServeMux. Route grouping improves code maintainability and API discoverability. Chi's middleware stack (RequestID, Logger, Recoverer, etc.) provides production-ready features out of the box.
+
+### II. Git Commit Policy (NON-NEGOTIABLE)
+
+One commit, one task. Each commit MUST represent a single, complete, logical unit of work.
+
+**Rationale**: Atomic commits enable better code review, easier debugging (via git bisect), cleaner history, and simpler rollback procedures. This principle ensures that each commit can be understood, reviewed, and potentially reverted independently.
+
+### III. React + TypeScript Technology Stack (NON-NEGOTIABLE)
+
+Frontend development MUST use React with TypeScript. All frontend code MUST be written in TypeScript, not JavaScript.
+
+**Rationale**: TypeScript provides static type checking that catches errors at compile time, improves developer experience with better IDE support, and enhances code maintainability. React is the chosen UI framework for this project.
+
+### IV. Real-Time Communication Architecture
+
+All real-time WebSocket communication MUST use Centrifugo as the WebSocket server. Backend services MUST communicate with Centrifugo via its gRPC API. Frontend MUST use the Centrifuge.js client library.
+
+**Architecture Requirements**:
+- Centrifugo MUST use Redis as its broker/engine for horizontal scalability
+- JWT tokens for Centrifugo MUST be generated by the backend using HMAC
+- Channel permissions MUST be enforced through Centrifugo's proxy feature (gRPC)
+- Real-time events MUST be published through Centrifugo's gRPC API, not HTTP
+
+**Rationale**: Centrifugo provides a production-ready, scalable WebSocket infrastructure with built-in connection management, channel subscriptions, presence tracking, and message broadcasting. Using Redis as the broker enables horizontal scaling across multiple Centrifugo nodes. The gRPC proxy pattern enables fine-grained access control and event validation while keeping the WebSocket server stateless.
+
+### V. Modular Service Architecture
+
+Backend code MUST be organized into domain-driven modules within `backend/internal/modules/`. Each module MUST encapsulate its domain logic, repository access, and business rules.
+
+**Module Structure Requirements**:
+- Each module MUST have a primary `Service` struct that coordinates module operations
+- Services MUST accept dependencies via constructor injection
+- Cross-module communication MUST occur through service interfaces, not direct repository access
+- Modules SHOULD be self-contained and minimize dependencies on other modules
+
+**Rationale**: Modular architecture promotes code organization, testability, and maintainability. Domain-driven modules ensure business logic is co-located with related functionality. Dependency injection enables easier testing through mocking and reduces tight coupling between components. This structure scales well as the application grows.
+
+### VI. Data Layer Standards
+
+The application MUST use PostgreSQL as the primary persistent data store and Redis for caching, queuing, and pub/sub operations.
+
+**Database Requirements**:
+- PostgreSQL 17+ MUST be used for all persistent data
+- Database schema MUST be managed through migrations using `golang-migrate`
+- All database operations MUST use `sqlx` for query execution
+- Connection pooling MUST be configured appropriately
+- Database models MUST be defined in `backend/internal/storage/postgres/models/`
+
+**Redis Requirements**:
+- Redis 7+ MUST be used for Centrifugo broker and application caching
+- Redis operations MUST use `github.com/redis/go-redis/v9`
+- Redis keys MUST follow a consistent naming convention
+
+**Rationale**: PostgreSQL provides robust ACID guarantees, JSON support, and excellent performance for relational data. Redis complements PostgreSQL by providing high-speed caching and pub/sub capabilities essential for real-time features. Using `sqlx` provides a good balance between raw SQL control and convenience. Schema migrations ensure database changes are versioned and reproducible.
+
+### VII. Observability and Metrics
+
+The application MUST implement comprehensive observability through structured logging and Prometheus metrics.
+
+**Logging Requirements**:
+- All services MUST use the internal logger package (`backend/internal/logger/`)
+- Log messages MUST include appropriate context (service name, request ID, etc.)
+- Log levels MUST be used appropriately (Debug, Info, Warning, Error)
+
+**Metrics Requirements**:
+- HTTP endpoints MUST expose Prometheus metrics on a dedicated metrics port
+- Key business operations MUST be instrumented with custom metrics
+- Metrics MUST include standard HTTP request metrics (duration, status codes, etc.)
+- The `prometheus/client_golang` library MUST be used for metrics collection
+
+**Rationale**: Structured logging and metrics are essential for production observability. Prometheus provides industry-standard metrics collection and querying. A separate metrics port ensures metrics don't interfere with application traffic and enables secure metrics collection. Comprehensive instrumentation enables effective debugging, performance monitoring, and capacity planning.
+
+## Technology Stack
+
+### Backend
+
+- **Language**: Go 1.25+
+- **Style Guide**: Uber Go Style Guide (https://github.com/uber-go/guide/blob/master/style.md)
+- **HTTP Router**: Chi router (`github.com/go-chi/chi/v5`)
+- **Database**: PostgreSQL 17+ with `sqlx` (`github.com/jmoiron/sqlx`)
+- **Cache/Queue**: Redis 7+ with `go-redis/v9` (`github.com/redis/go-redis/v9`)
+- **Migrations**: `golang-migrate/migrate` (`github.com/golang-migrate/migrate/v4`)
+- **Real-time**: Centrifugo gRPC client (`github.com/centrifugal/gocent/v3`)
+- **Metrics**: Prometheus (`github.com/prometheus/client_golang`)
+- **Validation**: `github.com/invopop/validation`
+- **UUID**: `github.com/google/uuid`
+- **Decimal Math**: `github.com/shopspring/decimal`
+- **Testing**: Go standard library `testing` + `github.com/stretchr/testify`
+
+### Frontend
+
+- **Framework**: React 18+
+- **Language**: TypeScript 5+ (MUST be used, not JavaScript)
+- **Build Tool**: Vite 5+
+- **WebSocket Client**: Centrifuge.js (`centrifuge`)
+- **Game Rendering**: Pixi.js 7+
+- **Wallet Integration**: TON Connect (`@tonconnect/ui-react`)
+- **Routing**: React Router 6+ (`react-router-dom`)
+- **Testing**: Vitest + React Testing Library
+
+### Infrastructure
+
+- **Database**: PostgreSQL 17-alpine (Docker)
+- **Cache**: Redis 7-alpine (Docker)
+- **WebSocket Server**: Centrifugo v4 (Docker)
+- **Containerization**: Docker + Docker Compose
+
+## Development Workflow
+
+### Code Review Requirements
+
+- All PRs MUST verify compliance with the constitution principles
+- Go code MUST be reviewed against Uber Go Style Guide
+- Frontend code MUST be TypeScript (no JavaScript)
+- Commits MUST follow "one commit, one task" principle
+- New modules MUST follow modular service architecture pattern
+- Database changes MUST include migrations
+- Real-time features MUST use Centrifugo (not direct WebSocket implementations)
+
+### Quality Gates
+
+- Code style compliance checks MUST pass before merge
+- TypeScript compilation MUST succeed with no errors
+- Go code MUST pass linting (`golangci-lint`) and formatting (`gofmt`) checks
+- All migrations MUST be tested (up and down)
+- Tests MUST pass before merge (when tests exist)
+
+### Testing Requirements
+
+- Unit tests SHOULD use table-driven test patterns (Go) and describe blocks (TypeScript)
+- Integration tests SHOULD use `dockertest` for ephemeral test infrastructure
+- Database tests MUST use transactions that rollback after test completion
+- WebSocket tests SHOULD mock Centrifugo interactions
+
+### Metrics Requirements
+
+- New HTTP endpoints MUST be registered with the Prometheus middleware
+- Long-running operations SHOULD expose duration metrics
+- Business-critical operations SHOULD expose counter metrics
+- Error conditions SHOULD be tracked with error metrics
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other coding practices and style guides. All development work MUST comply with these principles.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Amendment Procedure**:
+- Amendments require documentation of the rationale
+- Version must be incremented according to semantic versioning:
+  - MAJOR: Backward incompatible principle removals or redefinitions
+  - MINOR: New principle/section added or materially expanded guidance
+  - PATCH: Clarifications, wording, typo fixes, non-semantic refinements
+- All dependent templates and documentation MUST be updated to reflect changes
+
+**Compliance Review**:
+- All PRs/reviews MUST verify compliance with constitution principles
+- Complexity must be justified if it conflicts with simplicity principles
+- Use this constitution as the authoritative source for development guidance
+- Architectural decisions MUST align with established patterns (modular services, Centrifugo for real-time, PostgreSQL+Redis data layer)
+
+**Version**: 1.0.0 | **Ratified**: 2026-01-28 | **Last Amended**: 2026-01-28
