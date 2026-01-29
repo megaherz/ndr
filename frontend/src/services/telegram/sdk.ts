@@ -251,10 +251,10 @@ export class TelegramSDK {
 
     switch (type) {
       case 'impact':
-        this.webApp.HapticFeedback.impactOccurred(style as any || 'medium');
+        this.webApp.HapticFeedback.impactOccurred((style as 'light' | 'medium' | 'heavy') || 'medium');
         break;
       case 'notification':
-        this.webApp.HapticFeedback.notificationOccurred(style as any || 'success');
+        this.webApp.HapticFeedback.notificationOccurred((style as 'error' | 'success' | 'warning') || 'success');
         break;
       case 'selection':
         this.webApp.HapticFeedback.selectionChanged();

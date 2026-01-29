@@ -7,9 +7,18 @@ import { telegramSDK } from './sdk';
 /**
  * Extract and validate Telegram initData for backend authentication
  */
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  language_code?: string;
+  is_premium?: boolean;
+}
+
 export function extractInitData(): {
   initData: string;
-  user: any;
+  user: TelegramUser | null;
   isValid: boolean;
 } {
   const initData = telegramSDK.getInitData();
