@@ -31,7 +31,7 @@
                       "properties": {
                         "fuel_balance": {"type": "string", "description": "FUEL balance (decimal string)"},
                         "burn_balance": {"type": "string", "description": "BURN balance (decimal string)"},
-                        "rookie_races_completed": {"type": "integer", "minimum": 0, "maximum": 5}
+                        "rookie_races_completed": {"type": "integer", "minimum": 0, "maximum": 3}
                       }
                     },
                     "leagues": {

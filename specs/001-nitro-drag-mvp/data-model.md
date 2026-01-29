@@ -49,13 +49,13 @@ Represents a player's currency balances.
 | `ton_balance` | `DECIMAL(16,2)` | NOT NULL, DEFAULT 0.00, CHECK >= 0 | TON balance (external currency) |
 | `fuel_balance` | `DECIMAL(16,2)` | NOT NULL, DEFAULT 0.00, CHECK >= 0 | FUEL balance (hard currency) |
 | `burn_balance` | `DECIMAL(16,2)` | NOT NULL, DEFAULT 0.00, CHECK >= 0 | BURN balance (meta currency, non-convertible) |
-| `rookie_races_completed` | `INT` | NOT NULL, DEFAULT 0 | Count of Rookie races completed (max 5) |
+| `rookie_races_completed` | `INT` | NOT NULL, DEFAULT 0 | Count of Rookie races completed (max 3) |
 | `ton_wallet_address` | `VARCHAR(66)` | NULLABLE | TON wallet address (if connected via TON Connect) |
 | `created_at` | `TIMESTAMP` | NOT NULL, DEFAULT NOW() | Wallet creation timestamp |
 | `updated_at` | `TIMESTAMP` | NOT NULL, DEFAULT NOW() | Last balance update timestamp |
 
 **Constraints**:
-- `CHECK (rookie_races_completed >= 0 AND rookie_races_completed <= 5)` — Rookie races capped at 5
+- `CHECK (rookie_races_completed >= 0 AND rookie_races_completed <= 3)` — Rookie races capped at 3
 
 **Validation Rules**:
 - All balances must be non-negative (enforced via CHECK constraint)
@@ -133,8 +133,8 @@ Represents a single 10-player race session.
 | `id` | `UUID` | PRIMARY KEY | Match identifier |
 | `league` | `VARCHAR(20)` | NOT NULL, CHECK IN ('ROOKIE', 'STREET', 'PRO', 'TOP_FUEL') | League tier |
 | `status` | `VARCHAR(20)` | NOT NULL, CHECK IN ('FORMING', 'IN_PROGRESS', 'COMPLETED', 'ABORTED') | Match state |
-| `live_player_count` | `INT` | NOT NULL, CHECK >= 2 AND <= 10 | Number of live players |
-| `ghost_player_count` | `INT` | NOT NULL, CHECK >= 0 AND <= 8 | Number of Ghost players |
+| `live_player_count` | `INT` | NOT NULL, CHECK >= 1 AND <= 10 | Number of live players |
+| `ghost_player_count` | `INT` | NOT NULL, CHECK >= 0 AND <= 9 | Number of Ghost players |
 | `prize_pool` | `DECIMAL(16,2)` | NOT NULL | Total prize pool (before rake) |
 | `rake_amount` | `DECIMAL(16,2)` | NOT NULL | 8% rake taken |
 | `crash_seed` | `VARCHAR(128)` | NOT NULL | Cryptographic seed for provable fairness (one per heat, JSON array) |

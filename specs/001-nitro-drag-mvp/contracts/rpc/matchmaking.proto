@@ -31,7 +31,7 @@ message JoinMatchmakingResponse {
 
 // Error codes:
 // - INSUFFICIENT_BALANCE: User balance < league buy-in
-// - ROOKIE_LIMIT_REACHED: User completed 5 Rookie races (only for ROOKIE league)
+// - ROOKIE_LIMIT_REACHED: User completed 3 Rookie races (only for ROOKIE league)
 // - ALREADY_IN_QUEUE: User already has active queue ticket
 // - DUPLICATE_REQUEST: client_req_id already processed
 
