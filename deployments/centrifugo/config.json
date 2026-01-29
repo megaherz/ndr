@@ -4,24 +4,20 @@
   "token_hmac_secret_key": "local-centrifugo-secret",
   "api_key": "local-centrifugo-key",
   "grpc_api": true,
-  "grpc_api_address": "0.0.0.0:8001",
+  "grpc_api_port": 8001,
   "allowed_origins": ["http://localhost:5173"],
   "log_level": "debug",
   "health": true,
   "namespaces": [
     {
       "name": "user",
-      "proxy_subscribe": {
-        "enabled": true,
-        "endpoint": "grpc://host.docker.internal:8080"
-      }
+      "proxy_subscribe": true,
+      "proxy_subscribe_endpoint": "grpc://host.docker.internal:8080"
     },
     {
       "name": "match",
-      "proxy_subscribe": {
-        "enabled": true,
-        "endpoint": "grpc://host.docker.internal:8080"
-      }
+      "proxy_subscribe": true,
+      "proxy_subscribe_endpoint": "grpc://host.docker.internal:8080"
     }
   ],
   "rpc": {
