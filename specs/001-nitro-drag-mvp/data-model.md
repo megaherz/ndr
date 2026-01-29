@@ -191,6 +191,9 @@ Represents a player's participation in a match.
 - `idx_match_participants_user_id` on `user_id` (user match history)
 - `idx_match_participants_match_id` on `match_id` (match participant lookup)
 
+**Business Logic Notes**:
+- **Tiebreaker**: When two or more players have identical `total_score`, the system uses Heat 3 score as first tiebreaker (higher wins), then Heat 2, then Heat 1. This is calculated at runtime in settlement logic; no dedicated tiebreaker column is stored.
+
 ---
 
 ### 1.7 Ghost Replays

@@ -25,6 +25,8 @@ A new player opens Nitro Drag Royale in Telegram, joins their first Rookie leagu
 6. **Given** Heat 2 starts, **When** race begins, **Then** Target Line appears at position equal to Heat 1 winner's score with one-time tooltip "Reach this line to beat the current leader"
 7. **Given** player completes all 3 heats with total score of 780, **When** settlement displays, **Then** player sees their final position (e.g., 6th), prize pool breakdown, FUEL change, and BURN reward if applicable
 8. **Given** settlement is displayed, **When** player taps "RACE AGAIN", **Then** they return to matchmaking for same league (if sufficient balance) or Garage if insufficient
+9. **Given** two players finish with identical total scores (e.g., both 780), **When** settlement calculates positions, **Then** player with higher Heat 3 score ranks higher (if Heat 3 tied, use Heat 2, then Heat 1)
+10. **Given** player finishes 6th place in Rookie league, **When** settlement displays, **Then** BURN reward shown = 0 (Rookie league does not grant BURN per FR-038)
 
 ---
 
@@ -134,6 +136,8 @@ After each heat completes, all players see a 5-second intermission overlay showi
 4. **Given** intermission is displaying, **When** player taps screen, **Then** no action occurs (input is blocked during intermission)
 5. **Given** all 10 players visible in standings, **When** standings table renders, **Then** player's own name and row are always visible and highlighted (auto-scroll if needed)
 
+**See also**: Functional requirements FR-056 through FR-060 for detailed intermission specifications.
+
 ---
 
 ### User Story 8 - Early Heat End Optimization (Priority: P3)
@@ -206,7 +210,7 @@ If all alive players lock their scores before the engine crashes or timer expire
 ### Technical Constraints
 
 - **TC-001**: Application MUST be built using Telegram Mini Apps SDK (official) for native integration and TON Connect support
-- **TC-002**: Frontend MUST leverage Telegram WebApp API for UI components and platform features
+- **TC-002**: Frontend MUST leverage Telegram WebApp API for UI components and platform features (BackButton for navigation, MainButton for primary CTAs, HapticFeedback for interactions, ClosingConfirmation for active match warnings)
 - **TC-003**: Backend MUST use centralized Golang server for core game logic and economy safety
 - **TC-004**: Real-time race state synchronization MUST use Centrifugo for WebSocket/SSE-based pub-sub messaging
 - **TC-005**: Persistent storage MUST use PostgreSQL for transactional data (player accounts, match history, economy transactions)
@@ -220,13 +224,13 @@ If all alive players lock their scores before the engine crashes or timer expire
 - **FR-002**: System MUST allow matches with at least 1 live player; match starts even with single live player plus 9 Ghosts
 - **FR-003**: System MUST fill remaining slots (when live players <10) with Ghost players selected from historical real player replays
 - **FR-004**: Each match MUST consist of exactly 3 Heats (Heat 1 Baseline, Heat 2 Chase, Heat 3 Final)
-- **FR-005**: Speed MUST increase deterministically following formula: `Speed = 500 * ((e^(0.08·t) - 1) / (e^(0.08·25) - 1))` where t ∈ [0, 25] seconds
-- **FR-006**: Speed MUST be clamped to maximum 500 and MUST NOT grow beyond t=25 seconds
+- **FR-005**: Speed MUST increase deterministically following formula: `Speed = 500 * ((e^(0.08·t) - 1) / (e^(0.08·25) - 1))` where t ∈ [0, 25] seconds, rounded to 2 decimal places
+- **FR-006**: Speed MUST be clamped to maximum 500.00 and MUST NOT grow beyond t=25 seconds
 - **FR-007**: Player MUST be able to press "EARN POINTS" at any moment during active heat to lock current Speed as heat score
 - **FR-008**: If player does not press "EARN POINTS" before engine crashes, heat score MUST be 0
 - **FR-009**: Player total score MUST equal sum of all 3 heat scores
 - **FR-010**: System MUST rank players 1-10 by total score at match end
-- **FR-010a**: When two or more players have identical total scores, system MUST use Heat 3 score as first tiebreaker (higher wins), then Heat 2 score if needed, then Heat 1 score if needed
+- **FR-010a**: When two or more players have identical total scores, system MUST use Heat 3 score as first tiebreaker (higher wins), then Heat 2 score if needed, then Heat 1 score if needed (calculated at runtime in settlement logic, no database storage required)
 - **FR-011**: Crash timing and outcomes MUST be consistent and verifiable across all players (no client manipulation possible)
 - **FR-011a**: Server MUST generate crash point for each heat using cryptographic seed (pre-committed hash) before heat starts
 - **FR-011b**: Crash point MUST be verifiable by players after heat completion (seed + hash reveal for provable fairness)
@@ -239,22 +243,22 @@ If all alive players lock their scores before the engine crashes or timer expire
 - **FR-014**: In Heat 3, Target Line MUST be set to current leader's total score (Heat 1 + Heat 2, including Ghosts)
 - **FR-015**: Target Line MUST be fixed at heat start and MUST NOT update mid-heat
 - **FR-016**: When player crosses Target Line, system MUST display brief visual and audio feedback
-- **FR-017**: On first Target Line appearance for a player, system MUST display one-time tooltip: "Reach this line to beat the current leader"
+- **FR-017**: On first Target Line appearance for a player, system MUST display one-time tooltip: "Reach this line to beat the current leader" (stored in frontend session storage, resets on logout)
 
 **Economy — Currencies**
 
 - **FR-018**: System MUST support three currencies: TON (external), FUEL (hard currency), BURN (meta currency)
 - **FR-019**: FUEL MUST be used for match buy-ins and prize payouts
 - **FR-020**: BURN MUST be granted based on final match position and league tier (non-convertible to TON)
-- **FR-021**: TON deposits MUST credit player's FUEL balance at configured exchange rate
-- **FR-022**: TON withdrawals MUST debit player's FUEL balance (BURN excluded, non-convertible)
+- **FR-021**: TON deposits MUST credit player's FUEL balance at configured exchange rate (default: 1 TON = 100 FUEL, configurable via TON_FUEL_EXCHANGE_RATE environment variable)
+- **FR-022**: TON withdrawals MUST debit player's FUEL balance at same exchange rate (BURN excluded, non-convertible)
 
 **Economy — Leagues & Buy-ins**
 
 - **FR-023**: System MUST support four leagues: Rookie (10 FUEL), Street (50 FUEL), Pro (300 FUEL), Top Fuel (3000 FUEL)
 - **FR-024**: Rookie league MUST be available only for first 3 races per player
 - **FR-025**: Rookie league MUST NOT grant BURN rewards
-- **FR-026**: System MUST enforce buy-in deduction only when match is successfully formed (not during matchmaking)
+- **FR-026**: System MUST enforce buy-in deduction only when match countdown starts (match successfully formed and confirmed, not during matchmaking phase)
 - **FR-027**: If player balance < league buy-in, league MUST be visually disabled with explanatory tooltip and CTA "GO TO GAS STATION"
 
 **Economy — Prize Pool & Rake**
@@ -276,7 +280,7 @@ If all alive players lock their scores before the engine crashes or timer expire
 
 **Ghost Players**
 
-- **FR-039**: Ghost players MUST be replays of real historical player races
+- **FR-039**: Ghost players MUST be replays of real historical player races, selected using stratified sampling by score percentiles to ensure diverse performance distribution
 - **FR-040**: Ghost players MUST be visually indistinguishable from live players during race
 - **FR-041**: Ghost players MUST participate fully in prize pool (pay buy-in, can win prizes)
 - **FR-042**: Ghost players CAN finish in any position including 1st place
@@ -286,18 +290,17 @@ If all alive players lock their scores before the engine crashes or timer expire
 **Matchmaking**
 
 - **FR-045**: Matchmaking MUST display dedicated screen with status "FINDING RACERS" and progress indicator/timer
-- **FR-046**: Matchmaking MUST have maximum duration of 20 seconds
+- **FR-046**: Matchmaking MUST have maximum duration of 20 seconds from when backend receives join request (server-side timer)
 - **FR-047**: Player MUST be able to press "CANCEL" to abort matchmaking and return to Garage with no buy-in deduction
 - **FR-048**: If matchmaking times out (20s) or is cancelled, player MUST return to Garage with no buy-in deduction
 - **FR-049**: When match is successfully formed, player MUST transition directly to Race HUD with countdown "3…2…1"
-- **FR-050**: Buy-in MUST be deducted at countdown start (when match is confirmed), not when entering matchmaking
 
 **Race HUD States**
 
 - **FR-051**: Pre-heat state MUST display countdown overlay, Speed = 0, controls disabled, opponents visible but idle
 - **FR-052**: Active heat state MUST show Speed growing continuously, "EARN POINTS" button available
 - **FR-053**: Post-finish (spectator) state MUST show "YOUR HEAT SCORE: X", "CURRENT POSITION: N / Y" (updates live), Speed frozen, controls disabled
-- **FR-054**: If all alive players lock score before engine crashes, heat MUST end immediately (early heat end rule)
+- **FR-054**: If all alive players lock score before engine crashes, heat MUST end immediately (early heat end rule). "Alive players" = players who have not yet locked their score (excluding spectators who already locked or crashed)
 - **FR-055**: When early heat end triggers, system MUST display final Speed value and transition to intermission without waiting for full 25-second duration
 
 **Intermission**
@@ -321,7 +324,7 @@ If all alive players lock their scores before the engine crashes or timer expire
 **Connection & Reconnect**
 
 - **FR-068**: On disconnect during active race, system MUST display inline overlay "Reconnecting…"
-- **FR-069**: Player MUST have up to 3 seconds to reconnect
+- **FR-069**: Player MUST have up to 3 seconds to reconnect (grace period starts when Centrifugo disconnect event is received by backend)
 - **FR-070**: If reconnection succeeds within 3 seconds, gameplay MUST resume from last server-synced state
 - **FR-071**: If disconnect persists >3 seconds, player's current heat score MUST be 0 (auto-crash) and player enters spectator state
 - **FR-072**: If disconnect occurs before race starts (during countdown), player MUST be removed from lobby and buy-in MUST be refunded
@@ -391,7 +394,7 @@ If all alive players lock their scores before the engine crashes or timer expire
 - **SC-013**: Rookie league restrictions enforce correctly: available for first 3 races only, no BURN rewards, disabled after 3 completions
 - **SC-014**: 90% of players understand crash tournament risk/reward mechanic after first race (measured via retention to race #2)
 - **SC-015**: Players perceive Ghost players as indistinguishable from live players during races (measured via post-race surveys showing <5% detection rate)
-- **SC-016**: System handles 100 concurrent matches (1,000 concurrent live players) without performance degradation
+- **SC-016**: System handles 100 concurrent matches (1,000 concurrent live players) without performance degradation (defined as: RPC latency <200ms at 95th percentile, matchmaking <20s, heat state broadcast <100ms)
 - **SC-017**: 95% of disconnects <3 seconds result in successful reconnection and gameplay resumption
 - **SC-018**: Zero instances of buy-in deduction when matchmaking times out or is cancelled by player
 - **SC-019**: Settlement screen accurately reflects all prize and BURN rewards with zero discrepancies between displayed and credited amounts
