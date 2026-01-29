@@ -1,12 +1,12 @@
 root = "."
 testdata_dir = "testdata"
 tmp_dir = "tmp"
+env_files = [".env"]
 
 [build]
   args_bin = []
   entrypoint = "./tmp/main"
   cmd = "go build -o ./tmp/main ./cmd/server"
-  full_bin = "sh -c 'set -a; source .env; set +a; ./tmp/main'"
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []
