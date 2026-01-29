@@ -1,0 +1,91 @@
+// Centrifugo RPC Proxy Protocol (v4)
+// Source: https://github.com/centrifugal/centrifugo/blob/v4/internal/proxyproto/proxy.proto
+//
+// Backend MUST implement this service to handle RPC calls from Centrifugo
+syntax = "proto3";
+
+package centrifugal.centrifugo.proxy;
+
+option go_package = "github.com/ndr/backend/proto/centrifugo";
+
+// Backend implements this service
+service CentrifugoProxy {
+  rpc RPC(RPCRequest) returns (RPCResponse);
+  rpc Subscribe(SubscribeRequest) returns (SubscribeResponse);
+}
+
+// ===============================================
+// RPC Proxy (Hot Path Commands)
+// ===============================================
+
+message RPCRequest {
+  string client = 1;           // Centrifugo client ID
+  string transport = 2;        // "websocket"
+  string protocol = 3;         // Protocol version
+  string encoding = 4;         // "json"
+
+  string user = 10;            // User ID from JWT (authenticated)
+  string method = 11;          // RPC method name (e.g., "matchmaking.join")
+  bytes data = 12;             // JSON-encoded request payload
+  string b64data = 13;         // Base64-encoded data (alternative)
+  bytes meta = 14;             // Optional metadata
+}
+
+message RPCResult {
+  bytes data = 1;              // JSON-encoded response payload
+  string b64data = 2;          // Base64-encoded data (alternative)
+}
+
+message RPCResponse {
+  RPCResult result = 1;        // Success result
+  Error error = 2;             // Error (if any)
+  Disconnect disconnect = 3;   // Force disconnect (optional)
+}
+
+// ===============================================
+// Subscription Proxy (Channel Authorization)
+// ===============================================
+
+message SubscribeRequest {
+  string client = 1;           // Centrifugo client ID
+  string transport = 2;        // "websocket"
+  string protocol = 3;         // Protocol version
+  string encoding = 4;         // "json"
+
+  string user = 10;            // User ID from JWT
+  string channel = 11;         // Channel to subscribe (e.g., "match:uuid")
+  string token = 12;           // Channel token (optional)
+  bytes meta = 13;             // Optional metadata
+  bytes data = 14;             // Subscribe data
+  string b64data = 15;         // Base64-encoded data
+}
+
+message SubscribeResult {
+  int64 expire_at = 1;         // Subscription expiry (unix timestamp)
+  bytes info = 2;              // Custom info
+  string b64info = 3;          // Base64-encoded info
+  bytes data = 4;              // Custom data
+  string b64data = 5;          // Base64-encoded data
+}
+
+message SubscribeResponse {
+  SubscribeResult result = 1;  // Success result
+  Error error = 2;             // Error (if any)
+  Disconnect disconnect = 3;   // Force disconnect (optional)
+}
+
+// ===============================================
+// Error & Disconnect
+// ===============================================
+
+message Error {
+  uint32 code = 1;             // Error code
+  string message = 2;          // Error message
+  bool temporary = 3;          // Whether error is temporary
+}
+
+message Disconnect {
+  uint32 code = 1;             // Disconnect code
+  string reason = 2;           // Disconnect reason
+  bool reconnect = 3;          // Whether client should reconnect
+}

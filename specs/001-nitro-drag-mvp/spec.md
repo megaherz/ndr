@@ -42,21 +42,21 @@ A player enters matchmaking at an off-peak time when fewer than 10 live players 
 2. **Given** lobby has 3 live + 7 Ghost players, **When** race starts, **Then** all 10 players are visually indistinguishable and participate fully
 3. **Given** Ghost player finishes 1st place, **When** settlement displays, **Then** Ghost receives 50% of prize pool from house balance
 4. **Given** Ghost player participates in match, **When** leaderboards update, **Then** Ghost's results are excluded from all leaderboard statistics
-5. **Given** matchmaking timer reaches 20 seconds with only 2 live players found, **When** timeout occurs, **Then** match is cancelled and player returns to Garage with no buy-in deduction
+5. **Given** matchmaking timer reaches 20 seconds with only 1 live player found, **When** match is formed, **Then** system fills remaining 9 slots with Ghost players and match starts normally
 
 ---
 
 ### User Story 3 - Multi-League Progression & Economy (Priority: P2)
 
-A player progresses from Rookie (10 FUEL buy-in, first 5 races only, no BURN) through Street (50 FUEL, BURN rewards start) to Pro (300 FUEL) and Top Fuel (3000 FUEL), experiencing increasing stakes and BURN reward tiers.
+A player progresses from Rookie (10 FUEL buy-in, first 3 races only, no BURN) through Street (50 FUEL, BURN rewards start) to Pro (300 FUEL) and Top Fuel (3000 FUEL), experiencing increasing stakes and BURN reward tiers.
 
 **Why this priority**: League progression creates retention and monetization structure. While single-league gameplay is testable independently, the full economy (FUEL + BURN) and progression incentives require multi-league implementation.
 
-**Independent Test**: Can be tested by providing a test account with sufficient FUEL to play across leagues and verifying: (1) Rookie restrictions (5 races max, no BURN), (2) correct buy-in deductions per league, (3) prize pool calculations (8% rake), (4) BURN rewards scale with league and position.
+**Independent Test**: Can be tested by providing a test account with sufficient FUEL to play across leagues and verifying: (1) Rookie restrictions (3 races max, no BURN), (2) correct buy-in deductions per league, (3) prize pool calculations (8% rake), (4) BURN rewards scale with league and position.
 
 **Acceptance Scenarios**:
 
-1. **Given** new player completes 5 Rookie races, **When** they return to Garage, **Then** Rookie league is visually disabled with tooltip "Rookie league limited to first 5 races"
+1. **Given** new player completes 3 Rookie races, **When** they return to Garage, **Then** Rookie league is visually disabled with tooltip "Rookie league limited to first 3 races"
 2. **Given** player has 200 FUEL, **When** they select Street league (50 FUEL buy-in), **Then** they can enter matchmaking and play normally
 3. **Given** player finishes 6th in Street league, **When** settlement displays, **Then** they receive 15 BURN (per BURN rewards table)
 4. **Given** 10 players in Top Fuel league (3000 FUEL each), **When** match completes, **Then** total pool = 30,000 FUEL, rake = 2,400 FUEL, remaining = 27,600 FUEL distributed 50%/30%/20% to top 3
@@ -159,8 +159,8 @@ If all alive players lock their scores before the engine crashes or timer expire
 - **What happens when Ghost player wins 1st place?**  
   Ghost receives 50% of prize pool from house balance. Live players receive remaining prizes. Short-term platform PnL variance is accepted by design.
 
-- **What happens when matchmaking times out after 20 seconds with <2 live players?**  
-  Match is cancelled, player returns to Garage, and buy-in is never deducted (economy safety guarantee).
+- **What happens when matchmaking times out after 20 seconds with only 1 live player?**  
+  Match starts normally with 1 live player + 9 Ghosts. Buy-in is deducted and match proceeds as usual.
 
 - **What happens when player disconnects before race starts (during countdown)?**  
   Player is removed from lobby and buy-in is refunded. Match proceeds with remaining players + Ghosts to fill slots.
@@ -177,14 +177,14 @@ If all alive players lock their scores before the engine crashes or timer expire
 - **What happens when engine crashes at Speed = 0 (immediate crash)?**  
   Heat score = 0. Player enters spectator state immediately.
 
-- **What happens when player completes 5 Rookie races?**  
-  Rookie league becomes visually disabled. Tooltip explains "Rookie league limited to first 5 races. Try Street league!" No BURN rewards were granted during Rookie races.
+- **What happens when player completes 3 Rookie races?**  
+  Rookie league becomes visually disabled. Tooltip explains "Rookie league limited to first 3 races. Try Street league!" No BURN rewards were granted during Rookie races.
 
 - **What happens when player has insufficient FUEL for selected league?**  
   League is disabled/tappable. Tap shows tooltip "Insufficient FUEL. Current balance: X FUEL. Required: Y FUEL" with CTA "GO TO GAS STATION."
 
 - **What happens when all 10 players in lobby are Ghosts (0 live players)?**  
-  This should not occur due to minimum 2 live players requirement. If <2 live players, matchmaking times out after 20 seconds and cancels.
+  This should not occur as matchmaking requires at least 1 live player to initiate. A match cannot start with 0 live players.
 
 - **What happens when player's total score across 3 heats = 0 (crashed all heats)?**  
   Player finishes in last place (10th). Settlement shows position 10th, prize = 0 FUEL, BURN reward = [maximum for league, e.g., 25 BURN for Street].
@@ -203,12 +203,21 @@ If all alive players lock their scores before the engine crashes or timer expire
 
 ## Requirements *(mandatory)*
 
+### Technical Constraints
+
+- **TC-001**: Application MUST be built using Telegram Mini Apps SDK (official) for native integration and TON Connect support
+- **TC-002**: Frontend MUST leverage Telegram WebApp API for UI components and platform features
+- **TC-003**: Backend MUST use centralized Golang server for core game logic and economy safety
+- **TC-004**: Real-time race state synchronization MUST use Centrifugo for WebSocket/SSE-based pub-sub messaging
+- **TC-005**: Persistent storage MUST use PostgreSQL for transactional data (player accounts, match history, economy transactions)
+- **TC-006**: Volatile storage MUST use Redis for real-time state (active races, matchmaking queues, session data)
+
 ### Functional Requirements
 
 **Core Gameplay**
 
 - **FR-001**: System MUST support matches of exactly 10 players (live + Ghost combined)
-- **FR-002**: System MUST enforce minimum 2 live players per match; if <2 live after 20 seconds matchmaking, match MUST be cancelled
+- **FR-002**: System MUST allow matches with at least 1 live player; match starts even with single live player plus 9 Ghosts
 - **FR-003**: System MUST fill remaining slots (when live players <10) with Ghost players selected from historical real player replays
 - **FR-004**: Each match MUST consist of exactly 3 Heats (Heat 1 Baseline, Heat 2 Chase, Heat 3 Final)
 - **FR-005**: Speed MUST increase deterministically following formula: `Speed = 500 * ((e^(0.08·t) - 1) / (e^(0.08·25) - 1))` where t ∈ [0, 25] seconds
@@ -219,6 +228,9 @@ If all alive players lock their scores before the engine crashes or timer expire
 - **FR-010**: System MUST rank players 1-10 by total score at match end
 - **FR-010a**: When two or more players have identical total scores, system MUST use Heat 3 score as first tiebreaker (higher wins), then Heat 2 score if needed, then Heat 1 score if needed
 - **FR-011**: Crash timing and outcomes MUST be consistent and verifiable across all players (no client manipulation possible)
+- **FR-011a**: Server MUST generate crash point for each heat using cryptographic seed (pre-committed hash) before heat starts
+- **FR-011b**: Crash point MUST be verifiable by players after heat completion (seed + hash reveal for provable fairness)
+- **FR-011c**: Crash timing MUST follow uniform random distribution where t ∈ [0, 25] seconds has equal probability
 
 **Target Line Mechanic**
 
@@ -240,7 +252,7 @@ If all alive players lock their scores before the engine crashes or timer expire
 **Economy — Leagues & Buy-ins**
 
 - **FR-023**: System MUST support four leagues: Rookie (10 FUEL), Street (50 FUEL), Pro (300 FUEL), Top Fuel (3000 FUEL)
-- **FR-024**: Rookie league MUST be available only for first 5 races per player
+- **FR-024**: Rookie league MUST be available only for first 3 races per player
 - **FR-025**: Rookie league MUST NOT grant BURN rewards
 - **FR-026**: System MUST enforce buy-in deduction only when match is successfully formed (not during matchmaking)
 - **FR-027**: If player balance < league buy-in, league MUST be visually disabled with explanatory tooltip and CTA "GO TO GAS STATION"
@@ -345,10 +357,20 @@ If all alive players lock their scores before the engine crashes or timer expire
 - **Ghost**: Represents a historical replay of a real player's race performance (timing of score locks per heat, final scores, behavioral data) used to fill lobby slots
 - **Match**: Represents a single 10-player race session with match ID, league tier, lobby composition (live vs Ghost count), prize pool size, rake amount, timestamp
 - **Heat**: Represents one of 3 rounds within a match with heat number (1-3), Target Line value (if applicable), per-player heat scores, crash events, duration
-- **League**: Represents a tier of competition with name (Rookie/Street/Pro/Top Fuel), buy-in amount, BURN reward table, access restrictions (Rookie = first 5 races only)
+- **League**: Represents a tier of competition with name (Rookie/Street/Pro/Top Fuel), buy-in amount, BURN reward table, access restrictions (Rookie = first 3 races only)
 - **Prize Pool**: Represents the economic distribution of a match with total buy-ins, rake (8%), 1st place prize (50% of remaining), 2nd place prize (30%), 3rd place prize (20%)
 - **Transaction**: Represents a FUEL or TON currency movement with transaction type (buy-in, prize, deposit, withdrawal), amount, timestamp, status (pending/confirmed/failed)
 - **Standings**: Represents the intermediate ranking state after each heat with player position (1-10), total score (sum of completed heats), position delta vs previous heat (↑ ↓ =)
+
+## Clarifications
+
+### Session 2026-01-28
+
+- Q: Tech stack for Telegram Mini App implementation? → A: Telegram Mini Apps SDK (official)
+- Q: Backend architecture for race state synchronization and matchmaking? → A: Centralized Golang server with Centrifugo
+- Q: Database and storage solution for player state, match history, and Ghost replays? → A: PostgreSQL + Redis
+- Q: How is crash timing determined to ensure fairness and verifiability? → A: Server generates crash point using cryptographic seed (pre-committed hash)
+- Q: What probability distribution should determine when crashes occur within the 25-second window? → A: Uniform random distribution
 
 ## Success Criteria *(mandatory)*
 
@@ -366,7 +388,7 @@ If all alive players lock their scores before the engine crashes or timer expire
 - **SC-010**: Early heat end optimization triggers when all players finish, reducing average heat duration by 20% when applicable
 - **SC-011**: Players successfully deposit TON and receive FUEL credit within 30 seconds of transaction confirmation
 - **SC-012**: Players successfully withdraw FUEL and receive TON within 30 seconds of transaction confirmation
-- **SC-013**: Rookie league restrictions enforce correctly: available for first 5 races only, no BURN rewards, disabled after 5 completions
+- **SC-013**: Rookie league restrictions enforce correctly: available for first 3 races only, no BURN rewards, disabled after 3 completions
 - **SC-014**: 90% of players understand crash tournament risk/reward mechanic after first race (measured via retention to race #2)
 - **SC-015**: Players perceive Ghost players as indistinguishable from live players during races (measured via post-race surveys showing <5% detection rate)
 - **SC-016**: System handles 100 concurrent matches (1,000 concurrent live players) without performance degradation

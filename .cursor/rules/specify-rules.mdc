@@ -1,0 +1,17 @@
+# NDR Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-01-28
+
+## Constitution Reference
+
+All development must follow **NDR Constitution** principles (see `.specify/memory/constitution.md`):
+1. Golang Style Guide (Uber Go, Chi router, sqlx named params)
+2. Git Commit Policy (one commit, one task)
+3. React + TypeScript (TypeScript mandatory, no JavaScript)
+4. Real-Time Architecture (Centrifugo v4 + Redis + gRPC proxy)
+5. Modular Service Architecture (domain modules with dependency injection)
+6. Data Layer Standards (PostgreSQL 17+, Redis 7+, golang-migrate)
+7. Observability & Metrics (Prometheus, structured logging)
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->
