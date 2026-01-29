@@ -13,14 +13,13 @@ Go Backend → Centrifugo gRPC Publish API → Centrifugo → Client (WebSocket)
 
 ### 1. Personal Channel: `user:{user_id}`
 
-User-specific events (balances, payments, command acknowledgments).
+User-specific events (balances, payments).
 
 **Subscription**: Always allowed for authenticated user.
 
 **Events**:
 - `balance_updated` — FUEL/BURN balance changed
 - `payment_status_changed` — Deposit/withdrawal status updated
-- `command_ack` — RPC command processed successfully
 
 ---
 
@@ -92,28 +91,6 @@ Match lifecycle and heat state events.
 - `status` — `PENDING`, `CONFIRMED`, or `FAILED`
 - `ton_amount` — TON amount (decimal string)
 - `fuel_amount` — FUEL amount (decimal string)
-
----
-
-### command_ack
-
-**Channel**: `user:{user_id}`
-
-```json
-{
-  "type": "command_ack",
-  "payload": {
-    "client_req_id": "uuid",
-    "command": "matchmaking.join",
-    "status": "SUCCESS"
-  }
-}
-```
-
-**Fields**:
-- `client_req_id` — Client-provided idempotency key
-- `command` — RPC command name (e.g., `matchmaking.join`, `match.earn_points`)
-- `status` — `SUCCESS` or `ERROR`
 
 ---
 
@@ -327,6 +304,9 @@ Match lifecycle and heat state events.
 5. **Frontend must NOT use events as source of truth** — events are notifications only
    - Canonical state (e.g., balances) is always read via HTTP APIs
 6. **Event delivery is best-effort** — clients must handle missed events gracefully
+7. **RPC commands have synchronous responses** — no need for acknowledgment events
+   - RPC calls like `centrifuge.rpc('matchmaking.join', {...})` return results immediately
+   - Events are only for asynchronous notifications (balance changes, match updates, etc.)
 
 ## Centrifugo Publish API
 
