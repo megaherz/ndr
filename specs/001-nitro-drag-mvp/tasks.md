@@ -140,7 +140,7 @@
 - [ ] T064 [P] [US1] Create auth store in frontend/src/stores/authStore.ts (JWT tokens, user state)
 - [ ] T065 [P] [US1] Implement Telegram initData extraction in frontend/src/services/auth/telegram.ts
 - [ ] T066 [US1] Create login API call in frontend/src/services/api/auth.ts (POST /api/v1/auth/telegram)
-- [ ] T067 [US1] Create Auth page component in frontend/src/pages/Auth.tsx (Telegram login button)
+- [ ] T067 [US1] Implement automatic authentication on app launch in frontend/src/App.tsx (extract initData, call auth API, store tokens)
 - [ ] T068 [P] [US1] Create wallet store in frontend/src/stores/walletStore.ts (balances, league access)
 - [ ] T069 [US1] Create garage API call in frontend/src/services/api/garage.ts (GET /api/v1/garage)
 - [ ] T070 [US1] Create Garage page component in frontend/src/pages/Garage.tsx (league selector, balances, "RACE NOW")
