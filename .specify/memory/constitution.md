@@ -117,9 +117,10 @@ The application MUST use PostgreSQL as the primary persistent data store and Red
 The application MUST implement comprehensive observability through structured logging and Prometheus metrics.
 
 **Logging Requirements**:
-- All services MUST use the internal logger package (`backend/internal/logger/`)
+- All services MUST use logrus directly (`github.com/sirupsen/logrus`)
 - Log messages MUST include appropriate context (service name, request ID, etc.)
 - Log levels MUST be used appropriately (Debug, Info, Warning, Error)
+- No internal logger wrapper package is required for MVP
 
 **Metrics Requirements**:
 - HTTP endpoints MUST expose Prometheus metrics on a dedicated metrics port

@@ -43,7 +43,7 @@
 - [ ] T006 [P] Setup golang-migrate for database migrations in backend/internal/storage/postgres/migrations/
 - [ ] T007 [P] Create backend/internal/config/ package for 12-factor env var configuration
 - [ ] T008 [P] Setup Prometheus metrics endpoint in backend/internal/metrics/
-- [ ] T009 [P] Create .env.example files for backend and frontend with required environment variables
+- [ ] T009 [P] Create .env.example files for backend and frontend with required environment variables (DATABASE_URL, REDIS_URL, JWT_SECRET, CENTRIFUGO_SECRET, TONCENTER_API_KEY, METRICS_ADDR, MATCHMAKING_TIMEOUT_SECONDS)
 - [ ] T010 [P] Setup Telegram Mini Apps SDK in frontend/src/services/telegram/sdk.ts
 
 ---
@@ -54,7 +54,7 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T011 Create single database migration in backend/internal/storage/postgres/migrations/000001_initial_schema.up.sql with all 9 tables (users, wallets, system_wallets, ledger_entries, matches, match_participants, ghost_replays, match_settlements, payments) and seed data for system wallets (HOUSE_FUEL, RAKE_FUEL)
+- [ ] T011 Create single database migration in backend/internal/storage/postgres/migrations/000001_initial_schema.up.sql with all 9 tables (users, wallets, system_wallets, ledger_entries, matches, match_participants, ghost_replays, match_settlements, payments) and seed data for system wallets (HOUSE_FUEL with 10000 FUEL initial balance, RAKE_FUEL with 0 FUEL)
 - [ ] T012 [P] Create PostgreSQL models in backend/internal/storage/postgres/models/ for all 9 entities
 - [ ] T013 [P] Create Redis client wrapper in backend/internal/storage/redis/client.go
 - [ ] T014 [P] Generate Protobuf code from backend/proto/ using protoc (matchmaking.proto, match.proto)
@@ -104,7 +104,7 @@
 - [ ] T037 [P] [US1] Implement Redis queue operations in backend/internal/modules/matchmaker/queue.go
 - [ ] T038 [US1] Implement MatchmakerService with JoinQueue() method in backend/internal/modules/matchmaker/service.go
 - [ ] T039 [US1] Implement CancelQueue() method in backend/internal/modules/matchmaker/service.go
-- [ ] T040 [US1] Implement lobby formation logic (10 players max, 20s timeout) in backend/internal/modules/matchmaker/lobby.go
+- [ ] T040 [US1] Implement lobby formation logic (10 players max, timeout from MATCHMAKING_TIMEOUT_SECONDS env var) in backend/internal/modules/matchmaker/lobby.go
 - [ ] T041 [US1] Implement RPC handler matchmaking.join in backend/internal/modules/gateway/rpc/matchmaking_handler.go
 - [ ] T042 [US1] Implement RPC handler matchmaking.cancel in backend/internal/modules/gateway/rpc/matchmaking_handler.go
 
@@ -122,6 +122,7 @@
 - [ ] T052 [US1] Implement RPC handler match.earn_points in backend/internal/modules/gateway/rpc/match_handler.go
 - [ ] T053 [US1] Implement early heat end optimization (all players finished) in backend/internal/modules/gameengine/heat.go
 - [ ] T054 [US1] Implement settlement calculation (positions, prizes, BURN rewards) in backend/internal/modules/gameengine/settlement.go
+- [ ] T054b [US1] Implement tiebreaker logic (Heat 3 score → Heat 2 score → Heat 1 score for identical totals) in backend/internal/modules/gameengine/settlement.go
 - [ ] T055 [US1] Integrate settlement with ledger (apply prize/BURN entries) in backend/internal/modules/gameengine/settlement.go
 
 **Backend: Gateway Module (Events)**
@@ -183,6 +184,7 @@
 - [ ] T095 [US1] Display remaining players (4th-10th) in frontend/src/components/settlement/RankedList.tsx
 - [ ] T096 [US1] Display FUEL win/loss and BURN reward in frontend/src/components/settlement/PrizeDisplay.tsx
 - [ ] T097 [US1] Handle match_settled event and navigate to Settlement in frontend/src/services/centrifugo/eventHandlers.ts
+- [ ] T097b [US1] Display crash seed and hash for provable fairness in frontend/src/components/settlement/ProofDisplay.tsx
 - [ ] T098 [US1] Implement "RACE AGAIN" button (check balance, return to matchmaking) in frontend/src/pages/Settlement.tsx
 - [ ] T099 [US1] Implement "BACK TO GARAGE" button in frontend/src/pages/Settlement.tsx
 
@@ -427,7 +429,6 @@
 - [ ] T190 [P] Add Prometheus metrics for matchmaking wait time in backend/internal/metrics/matchmaking.go
 - [ ] T191 [P] Add Prometheus metrics for house balance gauge in backend/internal/metrics/economy.go
 - [ ] T192 [P] Implement graceful shutdown (SIGTERM, DRAINING state) in backend/cmd/server/main.go
-- [ ] T193 [P] Add structured logging with logrus for all module operations in backend/internal/modules/
 - [ ] T194 [P] Integrate Sentry for error tracking in backend/cmd/server/main.go
 - [ ] T195 [P] Integrate Sentry for error tracking in frontend/src/main.tsx
 - [ ] T196 Run validation against quickstart.md scenarios
@@ -543,8 +544,9 @@ With multiple developers:
 - [P] tasks = different files/modules, no dependencies
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
-- **Logrus used directly** - No internal logger package wrapper
+- **Logrus used directly** - No internal logger package wrapper per constitution VII
 - **Telegram Mini App** - Frontend initialized as Telegram Mini App with SDK integration in foundational phase
+- **Terminology**: Use "Heat 1/2/3" (not "Heat 1 Baseline"), "meta currency" for BURN, "Race HUD" for UI
 - Commit after each task or logical group (one commit, one task per Constitution II)
 - Stop at any checkpoint to validate story independently
 - **Avoid**: vague tasks, same file conflicts, cross-story dependencies that break independence
@@ -556,10 +558,10 @@ With multiple developers:
 
 ## Task Summary
 
-- **Total Tasks**: 196
+- **Total Tasks**: 197 (added T054b tiebreaker, T097b crash proof display; removed T193 logger wrapper)
 - **Phase 1 (Setup)**: 10 tasks
 - **Phase 2 (Foundational)**: 14 tasks (includes single migration file + Telegram Mini App SDK)
-- **Phase 3 (US1 - Core Gameplay)**: 75 tasks
+- **Phase 3 (US1 - Core Gameplay)**: 77 tasks (added T054b, T097b)
 - **Phase 4 (US5 - TON Integration)**: 22 tasks ⚡ MOVED EARLY
 - **Phase 5 (US2 - Ghost System)**: 16 tasks
 - **Phase 6 (US3 - Leagues)**: 12 tasks
@@ -567,8 +569,8 @@ With multiple developers:
 - **Phase 8 (US6 - Target Line)**: 8 tasks
 - **Phase 9 (US7 - Intermission)**: 7 tasks
 - **Phase 10 (US8 - Early End)**: 6 tasks
-- **Phase 11 (Polish)**: 15 tasks
+- **Phase 11 (Polish)**: 14 tasks (removed T193)
 
-**Early MVP** (US1 + US5 + US2): **121 tasks** ⚡ TON testing enabled early
-**Full Launch** (US1-US5): **160 tasks**
-**Complete Feature** (All stories): **196 tasks**
+**Early MVP** (US1 + US5 + US2): **123 tasks** ⚡ TON testing enabled early
+**Full Launch** (US1-US5): **162 tasks**
+**Complete Feature** (All stories): **197 tasks**
