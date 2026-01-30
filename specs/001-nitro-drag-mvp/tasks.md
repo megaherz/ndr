@@ -54,20 +54,20 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T011 Create single database migration in backend/internal/storage/postgres/migrations/000001_initial_schema.up.sql with all 9 tables (users, wallets, system_wallets, ledger_entries, matches, match_participants, ghost_replays, match_settlements, payments) and seed data for system wallets (HOUSE_FUEL with 10000 FUEL initial balance, RAKE_FUEL with 0 FUEL)
-- [ ] T012 [P] Create PostgreSQL models in backend/internal/storage/postgres/models/ for all 9 entities
-- [ ] T013 [P] Create Redis client wrapper in backend/internal/storage/redis/client.go
-- [ ] T014 [P] Generate Protobuf code from backend/proto/ using protoc (matchmaking.proto, match.proto)
-- [ ] T015 [P] Create Chi router setup in backend/cmd/server/main.go with logrus middleware (RequestID, Logger, Recoverer)
-- [ ] T016 [P] Create JWT utility package in backend/internal/auth/jwt.go for token generation/validation
-- [ ] T017 [P] Create Centrifugo gRPC client wrapper in backend/internal/centrifugo/client.go
-- [ ] T018 [P] Create decimal utility package in backend/internal/decimal/ for fixed-point arithmetic (shopspring/decimal)
-- [ ] T019 [P] Setup frontend routing with React Router in frontend/src/App.tsx
-- [ ] T020 [P] Create Zustand stores structure in frontend/src/stores/ (auth, wallet, match)
-- [ ] T021 [P] Create React Query setup in frontend/src/services/api/client.ts
-- [ ] T022 [P] Create Centrifuge.js client wrapper in frontend/src/services/centrifugo/client.ts
-- [ ] T023 [P] Create TON Connect UI setup in frontend/src/services/wallet/tonconnect.ts
-- [ ] T024 [P] Initialize Telegram WebApp API in frontend/src/services/telegram/webapp.ts
+- [x] T011 Create single database migration in backend/internal/storage/postgres/migrations/000001_initial_schema.up.sql with all 9 tables (users, wallets, system_wallets, ledger_entries, matches, match_participants, ghost_replays, match_settlements, payments) and seed data for system wallets (HOUSE_FUEL with 10000 FUEL initial balance, RAKE_FUEL with 0 FUEL)
+- [x] T012 [P] Create PostgreSQL models in backend/internal/storage/postgres/models/ for all 9 entities
+- [x] T013 [P] Create Redis client wrapper in backend/internal/storage/redis/client.go
+- [x] T014 [P] Generate Protobuf code from backend/proto/ using protoc (matchmaking.proto, match.proto)
+- [x] T015 [P] Create Chi router setup in backend/cmd/server/main.go with logrus middleware (RequestID, Logger, Recoverer)
+- [x] T016 [P] Create JWT utility package in backend/internal/auth/jwt.go for token generation/validation
+- [x] T017 [P] Create Centrifugo gRPC client wrapper in backend/internal/centrifugo/client.go
+- [x] T018 [P] Create decimal utility package in backend/internal/decimal/ for fixed-point arithmetic (shopspring/decimal)
+- [x] T019 [P] Setup frontend routing with React Router in frontend/src/App.tsx
+- [x] T020 [P] Create Zustand stores structure in frontend/src/stores/ (auth, wallet, match)
+- [x] T021 [P] Create React Query setup in frontend/src/services/api/client.ts
+- [x] T022 [P] Create Centrifuge.js client wrapper in frontend/src/services/centrifugo/client.ts
+- [x] T023 [P] Create TON Connect UI setup in frontend/src/services/wallet/tonconnect.ts
+- [x] T024 [P] Initialize Telegram WebApp API in frontend/src/services/telegram/webapp.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

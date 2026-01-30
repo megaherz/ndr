@@ -1,0 +1,58 @@
+// Match RPC Data Contracts
+// 
+// These message types are JSON-encoded and sent in the `data` field of RPCRequest/RPCResponse
+// when client calls: centrifuge.rpc('match.earn_points', {...})
+//
+// Flow:
+//   1. Client: centrifuge.rpc('match.earn_points', {match_id: '...', heat_number: 2, ...})
+//   2. Centrifugo → Backend gRPC: CentrifugoProxy.RPC(method='match.earn_points', data=<JSON bytes>)
+//   3. Backend: Unmarshal data → EarnPointsRequest, process, return EarnPointsResponse
+//   4. Centrifugo → Client: RPC response with result data
+syntax = "proto3";
+
+package match;
+
+option go_package = "github.com/ndr/backend/proto/match";
+
+// ===============================================
+// Match: Earn Points (Lock Score)
+// ===============================================
+
+message EarnPointsRequest {
+  string match_id = 1;            // Match identifier
+  int32 heat_number = 2;          // Heat number (1, 2, or 3)
+  string client_req_id = 3;       // Idempotency key
+}
+
+message EarnPointsResponse {
+  string heat_score = 1;          // Heat score locked (decimal string, e.g., "245.50")
+  string total_score = 2;         // Total score across all heats (decimal string)
+  int32 current_position = 3;     // Current position (1-10, may change)
+}
+
+// Error codes:
+// - MATCH_NOT_FOUND: match_id does not exist
+// - NOT_PARTICIPANT: User not in this match
+// - HEAT_NOT_ACTIVE: Heat not currently in progress
+// - ALREADY_LOCKED: User already locked score for this heat
+// - ENGINE_CRASHED: Engine already crashed (too late to lock)
+
+// ===============================================
+// Match: Give Up (Voluntary Exit)
+// ===============================================
+
+message GiveUpRequest {
+  string match_id = 1;            // Match identifier
+  string client_req_id = 2;       // Idempotency key
+}
+
+message GiveUpResponse {
+  string status = 1;              // GAVE_UP
+  string current_heat = 2;        // Heat number where give up occurred
+}
+
+// Error codes:
+// - MATCH_NOT_FOUND: match_id does not exist
+// - NOT_PARTICIPANT: User not in this match
+// - MATCH_NOT_ACTIVE: Match not in IN_PROGRESS state
+// - ALREADY_FINISHED: User already finished all heats
