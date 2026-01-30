@@ -2,83 +2,63 @@ package config
 
 import (
 	"fmt"
-	"os"
-	"strconv"
-	"time"
+
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 // Config holds all configuration for the application
 type Config struct {
 	// Database
-	DatabaseURL string
+	DatabaseURL string `env:"DATABASE_URL" env-required:"true" env-description:"Database connection URL"`
 
 	// Redis
-	RedisURL string
+	RedisURL string `env:"REDIS_URL" env-default:"redis://localhost:6379/0" env-description:"Redis connection URL"`
 
 	// JWT
-	JWTSecret string
+	JWTSecret string `env:"JWT_SECRET" env-required:"true" env-description:"JWT signing secret"`
 
 	// Centrifugo
-	CentrifugoAPIKey   string
-	CentrifugoSecret   string
-	CentrifugoGRPCAddr string
+	CentrifugoAPIKey   string `env:"CENTRIFUGO_API_KEY" env-required:"true" env-description:"Centrifugo API key"`
+	CentrifugoSecret   string `env:"CENTRIFUGO_SECRET" env-required:"true" env-description:"Centrifugo secret"`
+	CentrifugoGRPCAddr string `env:"CENTRIFUGO_GRPC_ADDR" env-default:"localhost:8001" env-description:"Centrifugo gRPC address"`
 
 	// TonCenter
-	TonCenterAPIKey string
+	TonCenterAPIKey string `env:"TONCENTER_API_KEY" env-description:"TonCenter API key (required in production)"`
 
 	// Server
-	Port        string
-	MetricsAddr string
+	Port        string `env:"PORT" env-default:"8080" env-description:"Server port"`
+	MetricsAddr string `env:"METRICS_ADDR" env-default:":9090" env-description:"Metrics server address"`
 
 	// Logging
-	LogLevel string
+	LogLevel string `env:"LOG_LEVEL" env-default:"info" env-description:"Log level (debug, info, warn, error)"`
 
 	// Matchmaking
-	MatchmakingTimeoutSeconds int
+	MatchmakingTimeoutSeconds int `env:"MATCHMAKING_TIMEOUT_SECONDS" env-default:"20" env-description:"Matchmaking timeout in seconds"`
 
 	// Environment
-	Environment string
+	Environment string `env:"ENVIRONMENT" env-default:"development" env-description:"Application environment (development, production)"`
 }
 
-// Load loads configuration from environment variables
+// Load loads configuration from environment variables and .env file
 func Load() (*Config, error) {
-	cfg := &Config{
-		DatabaseURL:               getEnv("DATABASE_URL", ""),
-		RedisURL:                  getEnv("REDIS_URL", "redis://localhost:6379/0"),
-		JWTSecret:                 getEnv("JWT_SECRET", ""),
-		CentrifugoAPIKey:          getEnv("CENTRIFUGO_API_KEY", ""),
-		CentrifugoSecret:          getEnv("CENTRIFUGO_SECRET", ""),
-		CentrifugoGRPCAddr:        getEnv("CENTRIFUGO_GRPC_ADDR", "localhost:8001"),
-		TonCenterAPIKey:           getEnv("TONCENTER_API_KEY", ""),
-		Port:                      getEnv("PORT", "8080"),
-		MetricsAddr:               getEnv("METRICS_ADDR", ":9090"),
-		LogLevel:                  getEnv("LOG_LEVEL", "info"),
-		MatchmakingTimeoutSeconds: getEnvAsInt("MATCHMAKING_TIMEOUT_SECONDS", 20),
-		Environment:               getEnv("ENVIRONMENT", "development"),
+	var cfg Config
+
+	// Load configuration from environment variables and .env file
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
-	// Validate required fields
+	// Additional validation for production-specific requirements
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("config validation failed: %w", err)
 	}
 
-	return cfg, nil
+	return &cfg, nil
 }
 
-// validate ensures all required configuration is present
+// validate ensures production-specific configuration requirements are met
 func (c *Config) validate() error {
-	if c.DatabaseURL == "" {
-		return fmt.Errorf("DATABASE_URL is required")
-	}
-	if c.JWTSecret == "" {
-		return fmt.Errorf("JWT_SECRET is required")
-	}
-	if c.CentrifugoAPIKey == "" {
-		return fmt.Errorf("CENTRIFUGO_API_KEY is required")
-	}
-	if c.CentrifugoSecret == "" {
-		return fmt.Errorf("CENTRIFUGO_SECRET is required")
-	}
+	// TonCenter API key is required in production
 	if c.TonCenterAPIKey == "" && c.Environment == "production" {
 		return fmt.Errorf("TONCENTER_API_KEY is required in production")
 	}
@@ -96,30 +76,9 @@ func (c *Config) IsProduction() bool {
 	return c.Environment == "production"
 }
 
-// getEnv gets an environment variable with a fallback value
-func getEnv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return fallback
+// Usage prints configuration usage information to stdout
+func Usage() {
+	var cfg Config
+	cleanenv.FUsage(nil, &cfg, nil, nil)
 }
 
-// getEnvAsInt gets an environment variable as an integer with a fallback value
-func getEnvAsInt(key string, fallback int) int {
-	if value := os.Getenv(key); value != "" {
-		if intVal, err := strconv.Atoi(value); err == nil {
-			return intVal
-		}
-	}
-	return fallback
-}
-
-// getEnvAsDuration gets an environment variable as a duration with a fallback value
-func getEnvAsDuration(key string, fallback time.Duration) time.Duration {
-	if value := os.Getenv(key); value != "" {
-		if duration, err := time.ParseDuration(value); err == nil {
-			return duration
-		}
-	}
-	return fallback
-}
