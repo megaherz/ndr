@@ -182,30 +182,9 @@ npm run test:coverage # Coverage report
 - [Development Guide](specs/001-nitro-drag-mvp/quickstart.md)
 - [Task Breakdown](specs/001-nitro-drag-mvp/tasks.md)
 
-## 🔧 Phase 1 Status: ✅ COMPLETE
-
-**Setup Phase (T001-T010)** - All tasks completed:
-
-- ✅ Project directory structure
-- ✅ Go module initialization with dependencies
-- ✅ React + TypeScript + Vite setup
-- ✅ Docker Compose (PostgreSQL, Redis, Centrifugo)
-- ✅ Makefiles with development targets
-- ✅ Database migration structure
-- ✅ Configuration management (12-factor)
-- ✅ Prometheus metrics setup
-- ✅ Environment variable templates
-- ✅ Telegram Mini Apps SDK integration
-
-**Next**: Phase 2 (Foundational) - Core infrastructure implementation
-
 ## 🤝 Contributing
 
 1. Follow the [Uber Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md)
 2. Use TypeScript only (no JavaScript files)
 3. One commit per task (atomic commits)
 4. Test your changes before committing
-
-## 📄 License
-
-[License information to be added]
