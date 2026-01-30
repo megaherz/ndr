@@ -47,13 +47,13 @@ func (c Currency) IsValid() bool {
 type OperationType string
 
 const (
-	OperationDeposit          OperationType = "DEPOSIT"
-	OperationWithdrawal       OperationType = "WITHDRAWAL"
-	OperationMatchBuyin       OperationType = "MATCH_BUYIN"
-	OperationMatchPrize       OperationType = "MATCH_PRIZE"
-	OperationMatchRake        OperationType = "MATCH_RAKE"
-	OperationMatchBurnReward  OperationType = "MATCH_BURN_REWARD"
-	OperationInitialBalance   OperationType = "INITIAL_BALANCE"
+	OperationDeposit         OperationType = "DEPOSIT"
+	OperationWithdrawal      OperationType = "WITHDRAWAL"
+	OperationMatchBuyin      OperationType = "MATCH_BUYIN"
+	OperationMatchPrize      OperationType = "MATCH_PRIZE"
+	OperationMatchRake       OperationType = "MATCH_RAKE"
+	OperationMatchBurnReward OperationType = "MATCH_BURN_REWARD"
+	OperationInitialBalance  OperationType = "INITIAL_BALANCE"
 )
 
 // String returns the string representation
@@ -65,8 +65,8 @@ func (o OperationType) String() string {
 func (o OperationType) IsValid() bool {
 	switch o {
 	case OperationDeposit, OperationWithdrawal, OperationMatchBuyin,
-		 OperationMatchPrize, OperationMatchRake, OperationMatchBurnReward,
-		 OperationInitialBalance:
+		OperationMatchPrize, OperationMatchRake, OperationMatchBurnReward,
+		OperationInitialBalance:
 		return true
 	}
 	return false

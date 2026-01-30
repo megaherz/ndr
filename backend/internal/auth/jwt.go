@@ -16,9 +16,9 @@ type JWTManager struct {
 
 // Claims represents the JWT claims for our application
 type Claims struct {
-	UserID      uuid.UUID `json:"user_id"`
-	TelegramID  int64     `json:"telegram_id"`
-	TokenType   string    `json:"token_type"` // "app" or "centrifugo"
+	UserID     uuid.UUID `json:"user_id"`
+	TelegramID int64     `json:"telegram_id"`
+	TokenType  string    `json:"token_type"` // "app" or "centrifugo"
 	jwt.RegisteredClaims
 }
 
@@ -39,7 +39,7 @@ func NewJWTManager(secretKey string, issuer string) *JWTManager {
 // GenerateAppToken generates a JWT token for API authentication
 func (m *JWTManager) GenerateAppToken(userID uuid.UUID, telegramID int64, duration time.Duration) (string, error) {
 	now := time.Now()
-	
+
 	claims := &Claims{
 		UserID:     userID,
 		TelegramID: telegramID,
@@ -62,7 +62,7 @@ func (m *JWTManager) GenerateAppToken(userID uuid.UUID, telegramID int64, durati
 // GenerateCentrifugoToken generates a JWT token for Centrifugo authentication
 func (m *JWTManager) GenerateCentrifugoToken(userID uuid.UUID, telegramID int64, duration time.Duration) (string, error) {
 	now := time.Now()
-	
+
 	claims := &Claims{
 		UserID:     userID,
 		TelegramID: telegramID,
@@ -172,12 +172,12 @@ func (m *JWTManager) ExtractUserIDFromToken(tokenString string) (uuid.UUID, erro
 
 // TokenInfo represents information about a token
 type TokenInfo struct {
-	UserID      uuid.UUID `json:"user_id"`
-	TelegramID  int64     `json:"telegram_id"`
-	TokenType   string    `json:"token_type"`
-	ExpiresAt   time.Time `json:"expires_at"`
-	IssuedAt    time.Time `json:"issued_at"`
-	TokenID     string    `json:"token_id"`
+	UserID     uuid.UUID `json:"user_id"`
+	TelegramID int64     `json:"telegram_id"`
+	TokenType  string    `json:"token_type"`
+	ExpiresAt  time.Time `json:"expires_at"`
+	IssuedAt   time.Time `json:"issued_at"`
+	TokenID    string    `json:"token_id"`
 }
 
 // GetTokenInfo extracts information from a token without validating signature

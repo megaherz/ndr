@@ -192,12 +192,12 @@ func ValidateMonetary(d decimal.Decimal) error {
 	if d.IsNegative() {
 		return fmt.Errorf("monetary amount cannot be negative: %s", d.String())
 	}
-	
+
 	// Check that it has at most 2 decimal places
 	if d.Exponent() < -2 {
 		return fmt.Errorf("monetary amount cannot have more than 2 decimal places: %s", d.String())
 	}
-	
+
 	return nil
 }
 
@@ -213,7 +213,7 @@ func (nd *NullDecimal) Scan(value interface{}) error {
 		nd.Decimal, nd.Valid = decimal.Zero, false
 		return nil
 	}
-	
+
 	nd.Valid = true
 	return nd.Decimal.Scan(value)
 }
@@ -247,11 +247,11 @@ func NewNullDecimalFromString(s string) (NullDecimal, error) {
 	if s == "" {
 		return NullDecimal{Valid: false}, nil
 	}
-	
+
 	d, err := NewFromString(s)
 	if err != nil {
 		return NullDecimal{Valid: false}, err
 	}
-	
+
 	return NewNullDecimal(d), nil
 }

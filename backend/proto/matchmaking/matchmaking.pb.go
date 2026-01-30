@@ -22,14 +22,14 @@ func (r *JoinMatchmakingRequest) Validate() error {
 	if r.ClientReqID == "" {
 		return fmt.Errorf("client_req_id is required")
 	}
-	
+
 	validLeagues := map[string]bool{
 		"ROOKIE": true, "STREET": true, "PRO": true, "TOP_FUEL": true,
 	}
 	if !validLeagues[r.League] {
 		return fmt.Errorf("invalid league: %s", r.League)
 	}
-	
+
 	return nil
 }
 

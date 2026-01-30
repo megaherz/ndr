@@ -61,8 +61,8 @@ func (c *Client) PublishToMatch(ctx context.Context, matchID string, event strin
 func (c *Client) publish(ctx context.Context, channel string, event string, data interface{}) error {
 	// Create the event payload
 	payload := map[string]interface{}{
-		"event": event,
-		"data":  data,
+		"event":     event,
+		"data":      data,
 		"timestamp": time.Now().Unix(),
 	}
 
@@ -95,8 +95,8 @@ func (c *Client) publish(ctx context.Context, channel string, event string, data
 func (c *Client) Broadcast(ctx context.Context, channels []string, event string, data interface{}) error {
 	// Create the event payload
 	payload := map[string]interface{}{
-		"event": event,
-		"data":  data,
+		"event":     event,
+		"data":      data,
 		"timestamp": time.Now().Unix(),
 	}
 
@@ -159,7 +159,7 @@ func (c *Client) GetChannels(ctx context.Context, pattern string) ([]string, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to get channels: %w", err)
 	}
-	
+
 	// Convert map keys to slice
 	channels := make([]string, 0, len(result.Channels))
 	for channel := range result.Channels {
@@ -174,7 +174,7 @@ func (c *Client) Disconnect(ctx context.Context, userID string) error {
 	if err != nil {
 		return fmt.Errorf("failed to disconnect user %s: %w", userID, err)
 	}
-	
+
 	c.logger.WithField("user_id", userID).Info("Disconnected user from Centrifugo")
 	return nil
 }
@@ -185,7 +185,7 @@ func (c *Client) Unsubscribe(ctx context.Context, channel string, userID string)
 	if err != nil {
 		return fmt.Errorf("failed to unsubscribe user %s from channel %s: %w", userID, channel, err)
 	}
-	
+
 	c.logger.WithFields(logrus.Fields{
 		"user_id": userID,
 		"channel": channel,
@@ -199,7 +199,7 @@ func (c *Client) Subscribe(ctx context.Context, channel string, userID string) e
 	if err != nil {
 		return fmt.Errorf("failed to subscribe user %s to channel %s: %w", userID, channel, err)
 	}
-	
+
 	c.logger.WithFields(logrus.Fields{
 		"user_id": userID,
 		"channel": channel,
@@ -232,7 +232,7 @@ const (
 	EventBalanceUpdated = "balance_updated"
 	EventMatchFound     = "match_found"
 	EventPaymentUpdate  = "payment_update"
-	
+
 	// Match channel events
 	EventHeatStarted  = "heat_started"
 	EventHeatEnded    = "heat_ended"
@@ -254,36 +254,36 @@ type MatchFoundEvent struct {
 }
 
 type HeatStartedEvent struct {
-	MatchID     string  `json:"match_id"`
-	HeatNumber  int     `json:"heat_number"`
-	Duration    int     `json:"duration_seconds"`
-	TargetLine  *string `json:"target_line,omitempty"` // For Heat 2 and 3
+	MatchID    string  `json:"match_id"`
+	HeatNumber int     `json:"heat_number"`
+	Duration   int     `json:"duration_seconds"`
+	TargetLine *string `json:"target_line,omitempty"` // For Heat 2 and 3
 }
 
 type HeatEndedEvent struct {
-	MatchID      string                    `json:"match_id"`
-	HeatNumber   int                       `json:"heat_number"`
-	Standings    []ParticipantStanding     `json:"standings"`
-	NextHeat     *int                      `json:"next_heat,omitempty"`
+	MatchID    string                `json:"match_id"`
+	HeatNumber int                   `json:"heat_number"`
+	Standings  []ParticipantStanding `json:"standings"`
+	NextHeat   *int                  `json:"next_heat,omitempty"`
 }
 
 type MatchSettledEvent struct {
-	MatchID       string                `json:"match_id"`
+	MatchID        string                `json:"match_id"`
 	FinalStandings []ParticipantStanding `json:"final_standings"`
-	PrizePool     string                `json:"prize_pool"`
-	CrashSeed     string                `json:"crash_seed"`
-	CrashSeedHash string                `json:"crash_seed_hash"`
+	PrizePool      string                `json:"prize_pool"`
+	CrashSeed      string                `json:"crash_seed"`
+	CrashSeedHash  string                `json:"crash_seed_hash"`
 }
 
 type ParticipantStanding struct {
-	UserID      *string `json:"user_id,omitempty"`
-	DisplayName string  `json:"display_name"`
-	Position    int     `json:"position"`
-	TotalScore  string  `json:"total_score"`
+	UserID      *string  `json:"user_id,omitempty"`
+	DisplayName string   `json:"display_name"`
+	Position    int      `json:"position"`
+	TotalScore  string   `json:"total_score"`
 	HeatScores  []string `json:"heat_scores"`
-	PrizeAmount string  `json:"prize_amount"`
-	BurnReward  string  `json:"burn_reward"`
-	IsGhost     bool    `json:"is_ghost"`
+	PrizeAmount string   `json:"prize_amount"`
+	BurnReward  string   `json:"burn_reward"`
+	IsGhost     bool     `json:"is_ghost"`
 }
 
 // Helper methods for publishing specific events

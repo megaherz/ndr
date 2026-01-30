@@ -51,10 +51,10 @@ func (l League) IsValid() bool {
 type MatchStatus string
 
 const (
-	MatchStatusForming     MatchStatus = "FORMING"
-	MatchStatusInProgress  MatchStatus = "IN_PROGRESS"
-	MatchStatusCompleted   MatchStatus = "COMPLETED"
-	MatchStatusAborted     MatchStatus = "ABORTED"
+	MatchStatusForming    MatchStatus = "FORMING"
+	MatchStatusInProgress MatchStatus = "IN_PROGRESS"
+	MatchStatusCompleted  MatchStatus = "COMPLETED"
+	MatchStatusAborted    MatchStatus = "ABORTED"
 )
 
 // String returns the string representation

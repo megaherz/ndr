@@ -81,4 +81,3 @@ func Usage() {
 	var cfg Config
 	cleanenv.FUsage(nil, &cfg, nil, nil)
 }
-
