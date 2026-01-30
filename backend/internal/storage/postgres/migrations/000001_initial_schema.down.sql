@@ -21,5 +21,13 @@ DROP TABLE IF EXISTS wallets;
 DROP TABLE IF EXISTS system_wallets;
 DROP TABLE IF EXISTS users;
 
+-- Drop ENUM types
+DROP TYPE IF EXISTS payment_status_type;
+DROP TYPE IF EXISTS payment_type;
+DROP TYPE IF EXISTS match_status_type;
+DROP TYPE IF EXISTS league_type;
+DROP TYPE IF EXISTS operation_type;
+DROP TYPE IF EXISTS currency_type;
+
 -- Drop extension (only if no other schemas use it)
 -- DROP EXTENSION IF EXISTS "uuid-ossp";

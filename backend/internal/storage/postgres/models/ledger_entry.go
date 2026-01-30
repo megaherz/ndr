@@ -20,7 +20,7 @@ type LedgerEntry struct {
 	CreatedAt     time.Time       `db:"created_at" json:"created_at"`
 }
 
-// Currency types
+// Currency types (PostgreSQL ENUM: currency_type)
 type Currency string
 
 const (
@@ -29,7 +29,21 @@ const (
 	CurrencyBURN Currency = "BURN"
 )
 
-// Operation types for ledger entries
+// String returns the string representation
+func (c Currency) String() string {
+	return string(c)
+}
+
+// IsValid checks if the currency is valid
+func (c Currency) IsValid() bool {
+	switch c {
+	case CurrencyTON, CurrencyFUEL, CurrencyBURN:
+		return true
+	}
+	return false
+}
+
+// Operation types for ledger entries (PostgreSQL ENUM: operation_type)
 type OperationType string
 
 const (
@@ -41,3 +55,19 @@ const (
 	OperationMatchBurnReward  OperationType = "MATCH_BURN_REWARD"
 	OperationInitialBalance   OperationType = "INITIAL_BALANCE"
 )
+
+// String returns the string representation
+func (o OperationType) String() string {
+	return string(o)
+}
+
+// IsValid checks if the operation type is valid
+func (o OperationType) IsValid() bool {
+	switch o {
+	case OperationDeposit, OperationWithdrawal, OperationMatchBuyin,
+		 OperationMatchPrize, OperationMatchRake, OperationMatchBurnReward,
+		 OperationInitialBalance:
+		return true
+	}
+	return false
+}

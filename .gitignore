@@ -107,6 +107,9 @@ out/
 *.db
 *.sqlite
 
+# Binaries
+bin/
+
 # Temporary files
 tmp/
 temp/

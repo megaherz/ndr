@@ -4,6 +4,27 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Create ENUM types for better performance and type safety
+CREATE TYPE currency_type AS ENUM ('TON', 'FUEL', 'BURN');
+
+CREATE TYPE operation_type AS ENUM (
+    'DEPOSIT', 
+    'WITHDRAWAL', 
+    'MATCH_BUYIN', 
+    'MATCH_PRIZE', 
+    'MATCH_RAKE', 
+    'MATCH_BURN_REWARD', 
+    'INITIAL_BALANCE'
+);
+
+CREATE TYPE league_type AS ENUM ('ROOKIE', 'STREET', 'PRO', 'TOP_FUEL');
+
+CREATE TYPE match_status_type AS ENUM ('FORMING', 'IN_PROGRESS', 'COMPLETED', 'ABORTED');
+
+CREATE TYPE payment_type AS ENUM ('DEPOSIT', 'WITHDRAWAL');
+
+CREATE TYPE payment_status_type AS ENUM ('PENDING', 'CONFIRMED', 'FAILED');
+
 -- 1. Users table
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -47,12 +68,9 @@ CREATE TABLE ledger_entries (
     id BIGSERIAL PRIMARY KEY,
     user_id UUID REFERENCES users(id),
     system_wallet VARCHAR(50) REFERENCES system_wallets(wallet_name),
-    currency VARCHAR(10) NOT NULL CHECK (currency IN ('TON', 'FUEL', 'BURN')),
+    currency currency_type NOT NULL,
     amount DECIMAL(16,2) NOT NULL,
-    operation_type VARCHAR(50) NOT NULL CHECK (operation_type IN (
-        'DEPOSIT', 'WITHDRAWAL', 'MATCH_BUYIN', 'MATCH_PRIZE', 
-        'MATCH_RAKE', 'MATCH_BURN_REWARD', 'INITIAL_BALANCE'
-    )),
+    operation_type operation_type NOT NULL,
     reference_id UUID,
     description TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -73,8 +91,8 @@ CREATE INDEX idx_ledger_system_wallet ON ledger_entries(system_wallet);
 -- 5. Matches table
 CREATE TABLE matches (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    league VARCHAR(20) NOT NULL CHECK (league IN ('ROOKIE', 'STREET', 'PRO', 'TOP_FUEL')),
-    status VARCHAR(20) NOT NULL CHECK (status IN ('FORMING', 'IN_PROGRESS', 'COMPLETED', 'ABORTED')),
+    league league_type NOT NULL,
+    status match_status_type NOT NULL,
     live_player_count INT NOT NULL CHECK (live_player_count >= 1 AND live_player_count <= 10),
     ghost_player_count INT NOT NULL CHECK (ghost_player_count >= 0 AND ghost_player_count <= 9),
     prize_pool DECIMAL(16,2) NOT NULL CHECK (prize_pool >= 0),
@@ -99,7 +117,7 @@ CREATE TABLE ghost_replays (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     source_match_id UUID REFERENCES matches(id) ON DELETE CASCADE,
     source_user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    league VARCHAR(20) NOT NULL CHECK (league IN ('ROOKIE', 'STREET', 'PRO', 'TOP_FUEL')),
+    league league_type NOT NULL,
     display_name VARCHAR(255) NOT NULL,
     heat1_score DECIMAL(8,2) NOT NULL CHECK (heat1_score >= 0),
     heat2_score DECIMAL(8,2) NOT NULL CHECK (heat2_score >= 0),
@@ -109,7 +127,7 @@ CREATE TABLE ghost_replays (
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     
     -- Ensure total_score equals sum of heats
-    CONSTRAINT ghost_replays_total_score_check CHECK (total_score = heat1_score + heat2_score + heat3_score)
+    CONSTRAINT chk_ghost_replays_total_score CHECK (total_score = heat1_score + heat2_score + heat3_score)
 );
 
 -- Indexes for Ghost selection
@@ -135,13 +153,13 @@ CREATE TABLE match_participants (
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     
     -- Ghost XOR live player constraint
-    CONSTRAINT match_participants_ghost_check CHECK (
+    CONSTRAINT chk_match_participants_ghost CHECK (
         (is_ghost = TRUE AND user_id IS NULL AND ghost_replay_id IS NOT NULL) OR
         (is_ghost = FALSE AND user_id IS NOT NULL AND ghost_replay_id IS NULL)
     ),
     
     -- Total score equals sum of heats (when all heats are completed)
-    CONSTRAINT match_participants_total_score_check CHECK (
+    CONSTRAINT chk_match_participants_total_score CHECK (
         total_score IS NULL OR 
         total_score = COALESCE(heat1_score, 0) + COALESCE(heat2_score, 0) + COALESCE(heat3_score, 0)
     )
@@ -166,8 +184,8 @@ CREATE TABLE match_settlements (
 CREATE TABLE payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    payment_type VARCHAR(20) NOT NULL CHECK (payment_type IN ('DEPOSIT', 'WITHDRAWAL')),
-    status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'CONFIRMED', 'FAILED')),
+    payment_type payment_type NOT NULL,
+    status payment_status_type NOT NULL,
     ton_amount DECIMAL(16,2) NOT NULL CHECK (ton_amount > 0),
     fuel_amount DECIMAL(16,2) NOT NULL CHECK (fuel_amount > 0),
     ton_tx_hash VARCHAR(128) UNIQUE,

@@ -21,7 +21,7 @@ type Payment struct {
 	UpdatedAt       time.Time       `db:"updated_at" json:"updated_at"`
 }
 
-// PaymentType represents the direction of the payment
+// PaymentType represents the direction of the payment (PostgreSQL ENUM: payment_type)
 type PaymentType string
 
 const (
@@ -29,7 +29,21 @@ const (
 	PaymentTypeWithdrawal PaymentType = "WITHDRAWAL"
 )
 
-// PaymentStatus represents the current status of a payment
+// String returns the string representation
+func (pt PaymentType) String() string {
+	return string(pt)
+}
+
+// IsValid checks if the payment type is valid
+func (pt PaymentType) IsValid() bool {
+	switch pt {
+	case PaymentTypeDeposit, PaymentTypeWithdrawal:
+		return true
+	}
+	return false
+}
+
+// PaymentStatus represents the current status of a payment (PostgreSQL ENUM: payment_status_type)
 type PaymentStatus string
 
 const (
@@ -37,6 +51,20 @@ const (
 	PaymentStatusConfirmed PaymentStatus = "CONFIRMED"
 	PaymentStatusFailed    PaymentStatus = "FAILED"
 )
+
+// String returns the string representation
+func (ps PaymentStatus) String() string {
+	return string(ps)
+}
+
+// IsValid checks if the payment status is valid
+func (ps PaymentStatus) IsValid() bool {
+	switch ps {
+	case PaymentStatusPending, PaymentStatusConfirmed, PaymentStatusFailed:
+		return true
+	}
+	return false
+}
 
 // IsDeposit returns true if this is a deposit payment
 func (p *Payment) IsDeposit() bool {

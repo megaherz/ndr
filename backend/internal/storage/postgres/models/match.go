@@ -23,7 +23,7 @@ type Match struct {
 	CreatedAt        time.Time       `db:"created_at" json:"created_at"`
 }
 
-// League represents the different racing leagues
+// League represents the different racing leagues (PostgreSQL ENUM: league_type)
 type League string
 
 const (
@@ -33,7 +33,21 @@ const (
 	LeagueTopFuel League = "TOP_FUEL"
 )
 
-// MatchStatus represents the current state of a match
+// String returns the string representation
+func (l League) String() string {
+	return string(l)
+}
+
+// IsValid checks if the league is valid
+func (l League) IsValid() bool {
+	switch l {
+	case LeagueRookie, LeagueStreet, LeaguePro, LeagueTopFuel:
+		return true
+	}
+	return false
+}
+
+// MatchStatus represents the current state of a match (PostgreSQL ENUM: match_status_type)
 type MatchStatus string
 
 const (
@@ -42,3 +56,17 @@ const (
 	MatchStatusCompleted   MatchStatus = "COMPLETED"
 	MatchStatusAborted     MatchStatus = "ABORTED"
 )
+
+// String returns the string representation
+func (ms MatchStatus) String() string {
+	return string(ms)
+}
+
+// IsValid checks if the match status is valid
+func (ms MatchStatus) IsValid() bool {
+	switch ms {
+	case MatchStatusForming, MatchStatusInProgress, MatchStatusCompleted, MatchStatusAborted:
+		return true
+	}
+	return false
+}
