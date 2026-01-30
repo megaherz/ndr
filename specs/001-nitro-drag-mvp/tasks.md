@@ -83,41 +83,41 @@
 
 **Backend: Auth Module**
 
-- [ ] T025 [P] [US1] Create auth module structure in backend/internal/modules/auth/
-- [ ] T026 [P] [US1] Implement Telegram initData validation in backend/internal/modules/auth/telegram.go
-- [ ] T027 [US1] Implement AuthService with Authenticate() method in backend/internal/modules/auth/service.go
-- [ ] T028 [US1] Create user repository interface in backend/internal/storage/postgres/repository/users.go
-- [ ] T029 [US1] Implement HTTP handler POST /api/v1/auth/telegram in backend/internal/modules/gateway/http/auth_handler.go
+- [x] T025 [P] [US1] Create auth module structure in backend/internal/modules/auth/
+- [x] T026 [P] [US1] Implement Telegram initData validation in backend/internal/modules/auth/telegram.go
+- [x] T027 [US1] Implement AuthService with Authenticate() method in backend/internal/modules/auth/service.go
+- [x] T028 [US1] Create user repository interface in backend/internal/storage/postgres/repository/users.go
+- [x] T029 [US1] Implement HTTP handler POST /api/v1/auth/telegram in backend/internal/modules/gateway/http/auth_handler.go
 
 **Backend: Account Module**
 
-- [ ] T030 [P] [US1] Create account module structure in backend/internal/modules/account/
-- [ ] T031 [P] [US1] Create wallet repository interface in backend/internal/storage/postgres/repository/wallets.go
-- [ ] T032 [P] [US1] Create ledger repository interface in backend/internal/storage/postgres/repository/ledger.go
-- [ ] T033 [US1] Implement AccountService with GetWallet() method in backend/internal/modules/account/service.go
-- [ ] T034 [US1] Implement ledger operations (DebitFuel, CreditFuel, RecordEntry) in backend/internal/modules/account/ledger.go
-- [ ] T035 [US1] Implement HTTP handler GET /api/v1/garage in backend/internal/modules/gateway/http/garage_handler.go
+- [x] T030 [P] [US1] Create account module structure in backend/internal/modules/account/
+- [x] T031 [P] [US1] Create wallet repository interface in backend/internal/storage/postgres/repository/wallets.go
+- [x] T032 [P] [US1] Create ledger repository interface in backend/internal/storage/postgres/repository/ledger.go
+- [x] T033 [US1] Implement AccountService with GetWallet() method in backend/internal/modules/account/service.go
+- [x] T034 [US1] Implement ledger operations (DebitFuel, CreditFuel, RecordEntry) in backend/internal/modules/account/ledger.go
+- [x] T035 [US1] Implement HTTP handler GET /api/v1/garage in backend/internal/modules/gateway/http/garage_handler.go
 
 **Backend: Matchmaker Module**
 
-- [ ] T036 [P] [US1] Create matchmaker module structure in backend/internal/modules/matchmaker/
-- [ ] T037 [P] [US1] Implement Redis queue operations in backend/internal/modules/matchmaker/queue.go
-- [ ] T038 [US1] Implement MatchmakerService with JoinQueue() method in backend/internal/modules/matchmaker/service.go
-- [ ] T039 [US1] Implement CancelQueue() method in backend/internal/modules/matchmaker/service.go
-- [ ] T040 [US1] Implement lobby formation logic (10 players max, timeout from MATCHMAKING_TIMEOUT_SECONDS env var) in backend/internal/modules/matchmaker/lobby.go
+- [x] T036 [P] [US1] Create matchmaker module structure in backend/internal/modules/matchmaker/
+- [x] T037 [P] [US1] Implement Redis queue operations in backend/internal/modules/matchmaker/queue.go
+- [x] T038 [US1] Implement MatchmakerService with JoinQueue() method in backend/internal/modules/matchmaker/service.go
+- [x] T039 [US1] Implement CancelQueue() method in backend/internal/modules/matchmaker/service.go
+- [x] T040 [US1] Implement lobby formation logic (10 players max, timeout from MATCHMAKING_TIMEOUT_SECONDS env var) in backend/internal/modules/matchmaker/lobby.go
 - [ ] T041 [US1] Implement RPC handler matchmaking.join in backend/internal/modules/gateway/rpc/matchmaking_handler.go
 - [ ] T042 [US1] Implement RPC handler matchmaking.cancel in backend/internal/modules/gateway/rpc/matchmaking_handler.go
 
 **Backend: Game Engine Module**
 
-- [ ] T043 [P] [US1] Create gameengine module structure in backend/internal/modules/gameengine/
-- [ ] T044 [P] [US1] Create match repository interface in backend/internal/storage/postgres/repository/matches.go
-- [ ] T045 [P] [US1] Create match participants repository interface in backend/internal/storage/postgres/repository/match_participants.go
-- [ ] T046 [P] [US1] Implement speed formula calculation Speed = 500 * ((e^(0.08·t) - 1) / (e^(0.08·25) - 1)) in backend/internal/modules/gameengine/physics.go
-- [ ] T047 [P] [US1] Implement crash seed generation (cryptographic hash) in backend/internal/modules/gameengine/provable_fairness.go
-- [ ] T048 [US1] Implement GameEngineService with CreateMatch() method in backend/internal/modules/gameengine/service.go
-- [ ] T049 [US1] Implement in-memory match state machine (FORMING → IN_PROGRESS → COMPLETED) in backend/internal/modules/gameengine/state.go
-- [ ] T050 [US1] Implement heat lifecycle (countdown → active → intermission) in backend/internal/modules/gameengine/heat.go
+- [x] T043 [P] [US1] Create gameengine module structure in backend/internal/modules/gameengine/
+- [x] T044 [P] [US1] Create match repository interface in backend/internal/storage/postgres/repository/matches.go
+- [x] T045 [P] [US1] Create match participants repository interface in backend/internal/storage/postgres/repository/match_participants.go
+- [x] T046 [P] [US1] Implement speed formula calculation Speed = 500 * ((e^(0.08·t) - 1) / (e^(0.08·25) - 1)) in backend/internal/modules/gameengine/physics.go
+- [x] T047 [P] [US1] Implement crash seed generation (cryptographic hash) in backend/internal/modules/gameengine/provable_fairness.go
+- [x] T048 [US1] Implement GameEngineService with CreateMatch() method in backend/internal/modules/gameengine/service.go
+- [x] T049 [US1] Implement in-memory match state machine (FORMING → IN_PROGRESS → COMPLETED) in backend/internal/modules/gameengine/state.go
+- [x] T050 [US1] Implement heat lifecycle (countdown → active → intermission) in backend/internal/modules/gameengine/heat.go
 - [ ] T051 [US1] Implement EarnPoints (lock score) logic in backend/internal/modules/gameengine/earn_points.go
 - [ ] T052 [US1] Implement RPC handler match.earn_points in backend/internal/modules/gateway/rpc/match_handler.go
 - [ ] T053 [US1] Implement early heat end optimization (all players finished) in backend/internal/modules/gameengine/heat.go
@@ -127,9 +127,9 @@
 
 **Backend: Gateway Module (Events)**
 
-- [ ] T056 [P] [US1] Create gateway module structure in backend/internal/modules/gateway/
-- [ ] T057 [P] [US1] Implement Centrifugo publisher methods (PublishToUser, PublishToMatch) in backend/internal/modules/gateway/centrifugo.go
-- [ ] T058 [P] [US1] Implement event schemas (match_found, heat_started, heat_ended, match_settled) in backend/internal/modules/gateway/events/
+- [x] T056 [P] [US1] Create gateway module structure in backend/internal/modules/gateway/
+- [x] T057 [P] [US1] Implement Centrifugo publisher methods (PublishToUser, PublishToMatch) in backend/internal/modules/gateway/centrifugo.go
+- [x] T058 [P] [US1] Implement event schemas (match_found, heat_started, heat_ended, match_settled) in backend/internal/modules/gateway/events/
 - [ ] T059 [US1] Publish match_found event to user:{user_id} channel in backend/internal/modules/matchmaker/service.go
 - [ ] T060 [US1] Publish heat_started event to match:{match_id} channel in backend/internal/modules/gameengine/heat.go
 - [ ] T061 [US1] Publish heat_ended event to match:{match_id} channel in backend/internal/modules/gameengine/heat.go
