@@ -116,9 +116,9 @@ interface TelegramWebApp {
 // Global Telegram object
 declare global {
   interface Window {
-    Telegram?: {
+    Telegram: {
       WebApp: TelegramWebApp
-    }
+    } | undefined
   }
 }
 
@@ -177,13 +177,15 @@ class TelegramWebAppService {
       language_code: 'en',
     }
 
+    const mockInitDataUnsafe = {
+      user: mockUser,
+      auth_date: Math.floor(Date.now() / 1000),
+      hash: 'mock_hash',
+    }
+
     this.webApp = {
       initData: 'mock_init_data',
-      initDataUnsafe: {
-        user: mockUser,
-        auth_date: Math.floor(Date.now() / 1000),
-        hash: 'mock_hash',
-      },
+      initDataUnsafe: mockInitDataUnsafe,
       version: '6.7',
       platform: 'web',
       colorScheme: 'dark',
@@ -216,23 +218,23 @@ class TelegramWebAppService {
       openLink: (url: string) => window.open(url, '_blank'),
       openTelegramLink: () => {},
       openInvoice: () => {},
-      showPopup: (params: any, callback?: any) => {
+      showPopup: (params: { message: string }, callback?: (result: string) => void) => {
         alert(params.message)
         callback?.('ok')
       },
-      showAlert: (message: string, callback?: any) => {
+      showAlert: (message: string, callback?: () => void) => {
         alert(message)
         callback?.()
       },
-      showConfirm: (message: string, callback?: any) => {
+      showConfirm: (message: string, callback?: (result: boolean) => void) => {
         const result = confirm(message)
         callback?.(result)
       },
       showScanQrPopup: () => {},
       closeScanQrPopup: () => {},
       readTextFromClipboard: () => {},
-      requestWriteAccess: (callback?: any) => callback?.(true),
-      requestContact: (callback?: any) => callback?.(true),
+      requestWriteAccess: (callback?: (granted: boolean) => void) => callback?.(true),
+      requestContact: (callback?: (granted: boolean) => void) => callback?.(true),
       
       HapticFeedback: {
         impactOccurred: () => {},
@@ -364,10 +366,10 @@ class TelegramWebAppService {
 
     switch (type) {
       case 'impact':
-        this.webApp.HapticFeedback.impactOccurred(style as any || 'medium')
+        this.webApp.HapticFeedback.impactOccurred((style as 'light' | 'medium' | 'heavy') || 'medium')
         break
       case 'notification':
-        this.webApp.HapticFeedback.notificationOccurred(style as any || 'success')
+        this.webApp.HapticFeedback.notificationOccurred((style as 'error' | 'success' | 'warning') || 'success')
         break
       case 'selection':
         this.webApp.HapticFeedback.selectionChanged()

@@ -196,26 +196,28 @@ export const TON_CONNECT_ERROR_CODES = {
 
 // Hook for handling TON Connect errors
 export const useTonConnectErrorHandler = () => {
-  const handleError = useCallback((error: any): TonConnectError => {
+  const handleError = useCallback((error: unknown): TonConnectError => {
     if (error instanceof TonConnectError) {
       return error
     }
 
+    const errorMessage = (error as any)?.message || String(error) || 'Unknown error'
+
     // Map common TON Connect errors
-    if (error?.message?.includes('user rejected')) {
+    if (errorMessage.includes('user rejected')) {
       return new TonConnectError('User rejected the transaction', TON_CONNECT_ERROR_CODES.USER_REJECTED)
     }
 
-    if (error?.message?.includes('wallet not connected')) {
+    if (errorMessage.includes('wallet not connected')) {
       return new TonConnectError('Wallet not connected', TON_CONNECT_ERROR_CODES.WALLET_NOT_CONNECTED)
     }
 
-    if (error?.message?.includes('insufficient balance')) {
+    if (errorMessage.includes('insufficient balance')) {
       return new TonConnectError('Insufficient balance', TON_CONNECT_ERROR_CODES.INSUFFICIENT_BALANCE)
     }
 
     // Generic error
-    return new TonConnectError(error?.message || 'Unknown TON Connect error', 'UNKNOWN_ERROR')
+    return new TonConnectError(errorMessage, 'UNKNOWN_ERROR')
   }, [])
 
   return { handleError }

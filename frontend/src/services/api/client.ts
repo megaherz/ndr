@@ -4,11 +4,11 @@ import { useAuthStore } from '../../stores/authStore'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'
 
 // Request types
-export interface APIError {
+export interface APIErrorResponse {
   error: string
   message: string
   code?: string
-  details?: Record<string, any>
+  details?: Record<string, unknown>
 }
 
 export interface APIResponse<T> {
@@ -44,7 +44,7 @@ class APIClient {
     const isJSON = contentType?.includes('application/json')
 
     if (!response.ok) {
-      let errorData: APIError
+      let errorData: APIErrorResponse
       
       if (isJSON) {
         errorData = await response.json()
@@ -52,6 +52,7 @@ class APIClient {
         errorData = {
           error: 'HTTP_ERROR',
           message: `HTTP ${response.status}: ${response.statusText}`,
+          code: 'HTTP_ERROR',
         }
       }
 
@@ -92,7 +93,7 @@ class APIClient {
     return this.handleResponse<T>(response)
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown): Promise<T> {
     const headers = await this.getAuthHeaders()
 
     const response = await fetch(`${this.baseURL}${endpoint}`, {
@@ -104,7 +105,7 @@ class APIClient {
     return this.handleResponse<T>(response)
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<T> {
+  async put<T>(endpoint: string, data?: unknown): Promise<T> {
     const headers = await this.getAuthHeaders()
 
     const response = await fetch(`${this.baseURL}${endpoint}`, {
@@ -130,10 +131,10 @@ class APIClient {
 
 // Custom API Error class
 export class APIError extends Error {
-  public code: string
-  public details?: Record<string, any>
+  public readonly code: string
+  public readonly details?: Record<string, unknown>
 
-  constructor(message: string, code: string = 'API_ERROR', details?: Record<string, any>) {
+  constructor(message: string, code: string = 'API_ERROR', details?: Record<string, unknown>) {
     super(message)
     this.name = 'APIError'
     this.code = code
@@ -146,7 +147,7 @@ export const apiClient = new APIClient(API_BASE_URL)
 
 // React Query configuration helpers
 export const queryConfig = {
-  retry: (failureCount: number, error: any) => {
+  retry: (failureCount: number, error: unknown) => {
     // Don't retry on authentication errors
     if (error instanceof APIError && error.code === 'UNAUTHORIZED') {
       return false

@@ -8,12 +8,12 @@ const CENTRIFUGO_URL = import.meta.env.VITE_CENTRIFUGO_URL || 'ws://localhost:80
 // Event types
 export interface CentrifugoEvent {
   event: string
-  data: any
+  data: unknown
   timestamp: number
 }
 
 // Event handlers type
-export type EventHandler = (data: any) => void
+export type EventHandler = (data: unknown) => void
 
 // Client wrapper class
 class CentrifugoClient {
@@ -102,7 +102,7 @@ class CentrifugoClient {
 
     this.centrifuge.on('error', (ctx) => {
       console.error('Centrifugo error:', ctx)
-      useMatchStore.getState().setError(`Connection error: ${ctx.message}`)
+      useMatchStore.getState().setError(`Connection error: ${ctx.error}`)
     })
   }
 
@@ -178,9 +178,9 @@ class CentrifugoClient {
   }
 
   // Handle incoming events
-  private handleEvent(channel: string, data: any): void {
+  private handleEvent(channel: string, data: unknown): void {
     try {
-      const event: CentrifugoEvent = data
+      const event = data as CentrifugoEvent
       console.log(`Received event on ${channel}:`, event)
 
       // Update last event timestamp
@@ -197,22 +197,28 @@ class CentrifugoClient {
       })
 
       // Built-in event handlers
-      this.handleBuiltInEvents(event)
+      this.handleBuiltInEvents(event).catch(error => {
+        console.error('Error in built-in event handler:', error)
+      }).catch(console.error)
     } catch (error) {
       console.error('Error handling event:', error)
     }
   }
 
   // Handle built-in events that update stores
-  private handleBuiltInEvents(event: CentrifugoEvent): void {
+  private async handleBuiltInEvents(event: CentrifugoEvent): Promise<void> {
     const matchStore = useMatchStore.getState()
+    const { Decimal } = await import('decimal.js')
+    
+    // Type guard for event data
+    const data = event.data as Record<string, unknown>
     
     switch (event.event) {
       case 'match_found':
         // Navigate to race when match is found
         matchStore.setCurrentMatch({
-          id: event.data.match_id,
-          league: event.data.league,
+          id: data.match_id as string,
+          league: data.league as string,
           status: 'forming',
           participants: [],
           currentHeat: 1,
@@ -221,33 +227,34 @@ class CentrifugoClient {
             { heatNumber: 2, status: 'waiting', duration: 25, playerLocked: false },
             { heatNumber: 3, status: 'waiting', duration: 25, playerLocked: false },
           ],
-          prizePool: new (await import('decimal.js')).Decimal(0),
+          prizePool: new Decimal(0),
         })
         matchStore.resetQueue()
         break
 
       case 'heat_started':
-        matchStore.updateHeatData(event.data.heat_number, {
+        matchStore.updateHeatData(data.heat_number as number, {
           status: 'active',
           startedAt: Date.now(),
-          targetLine: event.data.target_line ? 
-            new (await import('decimal.js')).Decimal(event.data.target_line) : 
+          targetLine: data.target_line ? 
+            new Decimal(data.target_line as string) : 
             undefined,
         })
         break
 
       case 'heat_ended':
-        matchStore.updateHeatData(event.data.heat_number, {
+        matchStore.updateHeatData(data.heat_number as number, {
           status: 'completed',
         })
         
         // Update standings
-        if (event.data.standings) {
-          event.data.standings.forEach((standing: any) => {
-            if (standing.user_id) {
-              matchStore.updateParticipant(standing.user_id, {
-                currentPosition: standing.position,
-                totalScore: new (await import('decimal.js')).Decimal(standing.total_score),
+        if (data.standings && Array.isArray(data.standings)) {
+          data.standings.forEach((standing: unknown) => {
+            const standingData = standing as Record<string, unknown>
+            if (standingData.user_id) {
+              matchStore.updateParticipant(standingData.user_id as string, {
+                currentPosition: standingData.position as number,
+                totalScore: new Decimal(standingData.total_score as string),
               })
             }
           })
@@ -256,34 +263,36 @@ class CentrifugoClient {
 
       case 'match_settled':
         // Update final standings and navigate to settlement
-        if (event.data.final_standings) {
-          event.data.final_standings.forEach((standing: any) => {
-            if (standing.user_id) {
-              matchStore.updateParticipant(standing.user_id, {
-                finalPosition: standing.position,
-                prizeAmount: new (await import('decimal.js')).Decimal(standing.prize_amount),
-                burnReward: new (await import('decimal.js')).Decimal(standing.burn_reward),
+        if (data.final_standings && Array.isArray(data.final_standings)) {
+          data.final_standings.forEach((standing: unknown) => {
+            const standingData = standing as Record<string, unknown>
+            if (standingData.user_id) {
+              matchStore.updateParticipant(standingData.user_id as string, {
+                finalPosition: standingData.position as number,
+                prizeAmount: new Decimal(standingData.prize_amount as string),
+                burnReward: new Decimal(standingData.burn_reward as string),
               })
             }
           })
         }
         break
 
-      case 'balance_updated':
+      case 'balance_updated': {
         // Update wallet balances
-        const walletStore = await import('../../stores/walletStore').then(m => m.useWalletStore.getState())
+        const walletStore = (await import('../../stores/walletStore')).useWalletStore.getState()
         walletStore.setBalances({
-          tonBalance: new (await import('decimal.js')).Decimal(event.data.ton_balance),
-          fuelBalance: new (await import('decimal.js')).Decimal(event.data.fuel_balance),
-          burnBalance: new (await import('decimal.js')).Decimal(event.data.burn_balance),
+          tonBalance: new Decimal(data.ton_balance as string),
+          fuelBalance: new Decimal(data.fuel_balance as string),
+          burnBalance: new Decimal(data.burn_balance as string),
           rookieRacesCompleted: walletStore.balances?.rookieRacesCompleted || 0,
         })
         break
+      }
     }
   }
 
   // RPC call wrapper
-  async rpc(method: string, data: any): Promise<any> {
+  async rpc(method: string, data: unknown): Promise<unknown> {
     if (!this.centrifuge || !this.isConnected) {
       throw new Error('Not connected to Centrifugo')
     }
