@@ -201,7 +201,7 @@ export const useTonConnectErrorHandler = () => {
       return error
     }
 
-    const errorMessage = (error as any)?.message || String(error) || 'Unknown error'
+    const errorMessage = (error as Error)?.message || String(error) || 'Unknown error'
 
     // Map common TON Connect errors
     if (errorMessage.includes('user rejected')) {
