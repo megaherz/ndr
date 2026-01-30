@@ -1,0 +1,6 @@
+# This directory will contain database migration files
+# Migration files will be created using: make migrate-create NAME=migration_name
+# 
+# Example migration files:
+# 000001_initial_schema.up.sql
+# 000001_initial_schema.down.sql

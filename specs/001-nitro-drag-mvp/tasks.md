@@ -35,16 +35,16 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project directory structure per plan.md (backend/, frontend/, deployments/)
-- [ ] T002 [P] Initialize Go module in backend/ with go.mod (Go 1.25+, include logrus dependency)
-- [ ] T003 [P] Initialize React project in frontend/ with Vite 5+ and TypeScript 5+ as Telegram Mini App
-- [ ] T004 [P] Create docker-compose.yml in deployments/ for PostgreSQL 17+, Redis 7+, Centrifugo v4
-- [ ] T005 [P] Create Makefile in backend/ with targets: dev, test, migrate-up, migrate-down, proto-gen
-- [ ] T006 [P] Setup golang-migrate for database migrations in backend/internal/storage/postgres/migrations/
-- [ ] T007 [P] Create backend/internal/config/ package for 12-factor env var configuration
-- [ ] T008 [P] Setup Prometheus metrics endpoint in backend/internal/metrics/
-- [ ] T009 [P] Create .env.example files for backend and frontend with required environment variables (DATABASE_URL, REDIS_URL, JWT_SECRET, CENTRIFUGO_SECRET, TONCENTER_API_KEY, METRICS_ADDR, MATCHMAKING_TIMEOUT_SECONDS)
-- [ ] T010 [P] Setup Telegram Mini Apps SDK in frontend/src/services/telegram/sdk.ts
+- [x] T001 Create project directory structure per plan.md (backend/, frontend/, deployments/)
+- [x] T002 [P] Initialize Go module in backend/ with go.mod (Go 1.25+, include logrus dependency)
+- [x] T003 [P] Initialize React project in frontend/ with Vite 5+ and TypeScript 5+ as Telegram Mini App
+- [x] T004 [P] Create docker-compose.yml in deployments/ for PostgreSQL 17+, Redis 7+, Centrifugo v4
+- [x] T005 [P] Create Makefile in backend/ with targets: dev, test, migrate-up, migrate-down, proto-gen
+- [x] T006 [P] Setup golang-migrate for database migrations in backend/internal/storage/postgres/migrations/
+- [x] T007 [P] Create backend/internal/config/ package for 12-factor env var configuration
+- [x] T008 [P] Setup Prometheus metrics endpoint in backend/internal/metrics/
+- [x] T009 [P] Create .env.example files for backend and frontend with required environment variables (DATABASE_URL, REDIS_URL, JWT_SECRET, CENTRIFUGO_SECRET, TONCENTER_API_KEY, METRICS_ADDR, MATCHMAKING_TIMEOUT_SECONDS)
+- [x] T010 [P] Setup Telegram Mini Apps SDK in frontend/src/services/telegram/sdk.ts
 
 ---
 
