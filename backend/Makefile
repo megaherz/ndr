@@ -1,4 +1,4 @@
-.PHONY: dev build test test-integration test-coverage lint migrate-up migrate-down migrate-create migrate-force proto-gen seed-test-data clean
+.PHONY: dev build test test-integration test-coverage lint migrate-up migrate-down migrate-create migrate-force proto-gen clean
 
 # Go parameters
 GOCMD=go
@@ -8,7 +8,6 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
 BINARY_NAME=ndr-server
-BINARY_UNIX=$(BINARY_NAME)_unix
 
 # Database parameters
 DATABASE_URL ?= postgres://ndr:ndr@localhost:5432/ndr?sslmode=disable
@@ -20,11 +19,7 @@ dev:
 
 # Build the binary
 build:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./cmd/server
-
-# Build for Linux
-build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v ./cmd/server
+	$(GOBUILD) -o bin/$(BINARY_NAME) -v ./cmd/server
 
 # Run unit tests
 test:
@@ -63,10 +58,6 @@ proto-gen:
 	protoc --go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		proto/**/*.proto
-
-# Seed test data
-seed-test-data:
-	$(GOCMD) run cmd/seed/main.go
 
 # Clean build artifacts
 clean:
