@@ -65,13 +65,16 @@ func (h *TestDBHelper) SetupDatabase() {
 	log.Printf("Connecting to database on %s", hostAndPort)
 	
 	// Wait for the database to be ready
-	h.Pool.Retry(func() error {
+	err = h.Pool.Retry(func() error {
 		h.DB, err = sqlx.Connect("postgres", databaseURL)
 		if err != nil {
 			return err
 		}
 		return h.DB.Ping()
 	})
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
 	require.NoError(h.t, err)
 	
 	// Apply migrations

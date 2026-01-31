@@ -243,7 +243,8 @@ func (lm *lobbyManager) abortLobby(ctx context.Context, lobby *Lobby) error {
 }
 
 // startMatch starts a match from a ready lobby
-func (lm *lobbyManager) startMatch(ctx context.Context, lobby *Lobby) error {
+// TODO: This function will be used when match starting is implemented
+func (lm *lobbyManager) startMatch(ctx context.Context, lobby *Lobby) error { //nolint:unused
 	// Validate all players are ready
 	for _, player := range lobby.Players {
 		if !player.IsReady {

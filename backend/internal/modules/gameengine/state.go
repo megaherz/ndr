@@ -181,8 +181,18 @@ func (m *matchStateManager) GetMatchState(ctx context.Context, matchID uuid.UUID
 	}
 	
 	// Return a copy to prevent external modifications
-	stateCopy := *state
-	stateCopy.Players = make(map[uuid.UUID]*InMemoryPlayer)
+	stateCopy := InMemoryMatchState{
+		MatchID:       state.MatchID,
+		League:        state.League,
+		Status:        state.Status,
+		CurrentHeat:   state.CurrentHeat,
+		HeatStatus:    state.HeatStatus,
+		HeatStartTime: state.HeatStartTime,
+		HeatEndTime:   state.HeatEndTime,
+		CreatedAt:     state.CreatedAt,
+		UpdatedAt:     state.UpdatedAt,
+		Players:       make(map[uuid.UUID]*InMemoryPlayer),
+	}
 	for id, player := range state.Players {
 		playerCopy := *player
 		stateCopy.Players[id] = &playerCopy

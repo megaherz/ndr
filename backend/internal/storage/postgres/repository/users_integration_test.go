@@ -205,7 +205,7 @@ func (suite *UserRepositoryIntegrationTestSuite) TestUpdateTelegramInfo() {
 	newFirstName := "New"
 	newLastName := "UpdatedName"
 	
-	err = suite.repository.UpdateTelegramInfo(ctx, user.ID, newUsername, newFirstName, newLastName)
+	err = suite.repository.UpdateTelegramInfo(ctx, user.ID, newUsername, newFirstName, newLastName, "")
 	require.NoError(suite.T(), err)
 	
 	// Verify update
@@ -250,6 +250,7 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_Exi
 		"updated_username", 
 		"Updated", 
 		"Name",
+		"",
 	)
 	
 	require.NoError(suite.T(), err)
@@ -274,6 +275,7 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_New
 		"new_user",
 		"New",
 		"User",
+		"",
 	)
 	
 	require.NoError(suite.T(), err)
@@ -304,6 +306,7 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_Emp
 		"", // empty username
 		"FirstOnly",
 		"", // empty last name
+		"", // empty photo URL
 	)
 	
 	require.NoError(suite.T(), err)

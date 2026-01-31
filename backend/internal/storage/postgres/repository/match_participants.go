@@ -102,7 +102,7 @@ func (r *matchParticipantRepository) CreateBatch(ctx context.Context, participan
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	
 	query := `
 		INSERT INTO match_participants (match_id, user_id, is_ghost, ghost_replay_id,

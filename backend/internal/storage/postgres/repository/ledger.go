@@ -68,7 +68,7 @@ func (r *ledgerRepository) CreateEntries(ctx context.Context, entries []*models.
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	
 	query := `
 		INSERT INTO ledger_entries (user_id, system_wallet, currency, amount, 
