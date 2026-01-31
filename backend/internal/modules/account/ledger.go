@@ -9,9 +9,9 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/constants"
-	"ndr/internal/storage/postgres/models"
-	"ndr/internal/storage/postgres/repository"
+	"github.com/megaherz/ndr/internal/constants"
+	"github.com/megaherz/ndr/internal/storage/postgres/models"
+	"github.com/megaherz/ndr/internal/storage/postgres/repository"
 )
 
 // LedgerOperations handles ledger entry operations

@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/constants"
-	"ndr/internal/modules/matchmaker"
+	"github.com/megaherz/ndr/internal/constants"
+	"github.com/megaherz/ndr/internal/modules/matchmaker"
 )
 
 // MatchmakingHandler handles matchmaking RPC requests

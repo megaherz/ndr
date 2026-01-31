@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/centrifugo"
+	"github.com/megaherz/ndr/internal/centrifugo"
 )
 
 // CentrifugoPublisher handles publishing events to Centrifugo channels

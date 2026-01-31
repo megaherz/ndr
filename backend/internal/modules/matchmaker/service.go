@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/constants"
-	"ndr/internal/modules/account"
-	"ndr/internal/modules/gateway"
+	"github.com/megaherz/ndr/internal/constants"
+	"github.com/megaherz/ndr/internal/modules/account"
+	"github.com/megaherz/ndr/internal/modules/gateway"
 )
 
 // MatchmakerService handles matchmaking operations

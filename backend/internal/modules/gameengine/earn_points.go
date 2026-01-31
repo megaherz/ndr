@@ -9,7 +9,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/storage/postgres/repository"
+	"github.com/megaherz/ndr/internal/storage/postgres/repository"
 )
 
 // EarnPointsService handles the logic for players locking their scores

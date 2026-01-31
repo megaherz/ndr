@@ -8,8 +8,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/shopspring/decimal"
 
-	"ndr/internal/constants"
-	"ndr/internal/storage/postgres/models"
+	"github.com/megaherz/ndr/internal/constants"
+	"github.com/megaherz/ndr/internal/storage/postgres/models"
 )
 
 // LedgerRepository defines the interface for ledger entry data access

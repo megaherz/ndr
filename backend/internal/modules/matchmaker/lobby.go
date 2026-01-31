@@ -11,9 +11,9 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/modules/gameengine"
-	"ndr/internal/modules/gateway"
-	"ndr/internal/modules/gateway/events"
+	"github.com/megaherz/ndr/internal/modules/gameengine"
+	"github.com/megaherz/ndr/internal/modules/gateway"
+	"github.com/megaherz/ndr/internal/modules/gateway/events"
 )
 
 // LobbyManager handles lobby formation and management

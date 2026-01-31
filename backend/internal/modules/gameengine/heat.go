@@ -9,8 +9,8 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/modules/gateway"
-	"ndr/internal/modules/gateway/events"
+	"github.com/megaherz/ndr/internal/modules/gateway"
+	"github.com/megaherz/ndr/internal/modules/gateway/events"
 )
 
 // HeatManager manages the lifecycle of heats within a match

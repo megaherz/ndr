@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/modules/auth"
+	"github.com/megaherz/ndr/internal/modules/auth"
 )
 
 // AuthHandler handles authentication HTTP endpoints

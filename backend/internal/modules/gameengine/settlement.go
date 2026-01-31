@@ -9,12 +9,12 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/constants"
-	"ndr/internal/modules/account"
-	"ndr/internal/modules/gateway"
-	"ndr/internal/modules/gateway/events"
-	"ndr/internal/storage/postgres/models"
-	"ndr/internal/storage/postgres/repository"
+	"github.com/megaherz/ndr/internal/constants"
+	"github.com/megaherz/ndr/internal/modules/account"
+	"github.com/megaherz/ndr/internal/modules/gateway"
+	"github.com/megaherz/ndr/internal/modules/gateway/events"
+	"github.com/megaherz/ndr/internal/storage/postgres/models"
+	"github.com/megaherz/ndr/internal/storage/postgres/repository"
 )
 
 // SettlementService handles match settlement and prize distribution

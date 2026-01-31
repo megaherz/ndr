@@ -9,7 +9,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/modules/gameengine"
+	"github.com/megaherz/ndr/internal/modules/gameengine"
 )
 
 // MatchHandler handles match-related RPC requests

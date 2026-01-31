@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/shopspring/decimal"
 
-	"ndr/internal/storage/postgres/models"
+	"github.com/megaherz/ndr/internal/storage/postgres/models"
 )
 
 // WalletRepository defines the interface for wallet data access

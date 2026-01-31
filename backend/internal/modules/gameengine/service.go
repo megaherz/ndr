@@ -10,8 +10,8 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/storage/postgres/models"
-	"ndr/internal/storage/postgres/repository"
+	"github.com/megaherz/ndr/internal/storage/postgres/models"
+	"github.com/megaherz/ndr/internal/storage/postgres/repository"
 )
 
 // GameEngineService handles game engine operations

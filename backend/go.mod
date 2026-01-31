@@ -1,4 +1,4 @@
-module ndr
+module github.com/megaherz/ndr
 
 go 1.25.4
 

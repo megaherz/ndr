@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/shopspring/decimal"
 
-	"ndr/internal/storage/postgres/models"
+	"github.com/megaherz/ndr/internal/storage/postgres/models"
 )
 
 // MatchParticipantRepository defines the interface for match participant data access
