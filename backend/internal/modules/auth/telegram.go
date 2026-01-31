@@ -4,12 +4,12 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -120,63 +120,26 @@ func ValidateTelegramInitData(initData, botToken string) (*TelegramInitData, err
 }
 
 // parseTelegramUser parses the user JSON string from Telegram initData
-// This is a simplified parser for the required fields
 func parseTelegramUser(userJSON string) (*TelegramUser, error) {
 	// Decode URL-encoded JSON
 	decoded, err := url.QueryUnescape(userJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to URL decode user JSON: %w", err)
 	}
 
-	// Simple JSON parsing for required fields
-	user := &TelegramUser{}
-
-	// Extract ID
-	if idStart := strings.Index(decoded, `"id":`); idStart != -1 {
-		idStart += 5
-		idEnd := strings.IndexAny(decoded[idStart:], ",}")
-		if idEnd == -1 {
-			return nil, errors.New("invalid user JSON format")
-		}
-		idStr := decoded[idStart : idStart+idEnd]
-		id, err := strconv.ParseInt(idStr, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid user ID: %w", err)
-		}
-		user.ID = id
-	} else {
-		return nil, errors.New("missing user ID")
+	// Parse JSON properly
+	var user TelegramUser
+	if err := json.Unmarshal([]byte(decoded), &user); err != nil {
+		return nil, fmt.Errorf("failed to parse user JSON: %w", err)
 	}
 
-	// Extract first_name
-	if nameStart := strings.Index(decoded, `"first_name":"`); nameStart != -1 {
-		nameStart += 14
-		nameEnd := strings.Index(decoded[nameStart:], `"`)
-		if nameEnd == -1 {
-			return nil, errors.New("invalid first_name format")
-		}
-		user.FirstName = decoded[nameStart : nameStart+nameEnd]
-	} else {
+	// Validate required fields
+	if user.ID == 0 {
+		return nil, errors.New("missing or invalid user ID")
+	}
+	if user.FirstName == "" {
 		return nil, errors.New("missing first_name")
 	}
 
-	// Extract last_name (optional)
-	if nameStart := strings.Index(decoded, `"last_name":"`); nameStart != -1 {
-		nameStart += 13
-		nameEnd := strings.Index(decoded[nameStart:], `"`)
-		if nameEnd != -1 {
-			user.LastName = decoded[nameStart : nameStart+nameEnd]
-		}
-	}
-
-	// Extract username (optional)
-	if usernameStart := strings.Index(decoded, `"username":"`); usernameStart != -1 {
-		usernameStart += 12
-		usernameEnd := strings.Index(decoded[usernameStart:], `"`)
-		if usernameEnd != -1 {
-			user.Username = decoded[usernameStart : usernameStart+usernameEnd]
-		}
-	}
-
-	return user, nil
+	return &user, nil
 }
