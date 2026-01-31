@@ -350,10 +350,11 @@ func (h *heatManager) publishHeatStartedEvent(ctx context.Context, matchID uuid.
 	
 	// Calculate target line for Heat 2 and 3
 	var targetLine *decimal.Decimal
-	if heat == 2 {
+	switch heat {
+	case 2:
 		// Target line is Heat 1 winner's score
 		targetLine = h.calculateHeat1WinnerScore(state)
-	} else if heat == 3 {
+	case 3:
 		// Target line is current leader's total score
 		targetLine = h.calculateCurrentLeaderTotal(state)
 	}

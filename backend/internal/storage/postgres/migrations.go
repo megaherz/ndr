@@ -109,7 +109,9 @@ func (m *MigrationRunner) getAppliedMigrations(ctx context.Context) (map[string]
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close() // Ignore close error in defer
+	}()
 
 	applied := make(map[string]bool)
 	for rows.Next() {
@@ -169,7 +171,9 @@ func (m *MigrationRunner) GetAppliedMigrations(ctx context.Context) ([]string, e
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close() // Ignore close error in defer
+	}()
 
 	var migrations []string
 	for rows.Next() {

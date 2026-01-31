@@ -3,17 +3,13 @@
 
 import { isTelegramEnvironment } from '../telegram/webapp'
 
-// Eruda instance type
+// Eruda instance type - simplified to match actual usage
 interface ErudaInstance {
   init: (config?: ErudaConfig) => void
   show: () => void
   hide: () => void
-  destroy: () => void
-  get: (name: string) => unknown
-  add: (plugin: unknown) => void
-  remove: (name: string) => void
+  destroy?: () => void
   position: (config: { x: number; y: number }) => void
-  scale: (scale: number) => void
 }
 
 interface ErudaConfig {
@@ -37,7 +33,6 @@ declare global {
 // Eruda service class
 class ErudaService {
   private isInitialized = false
-  private isLoaded = false
   private loadPromise: Promise<void> | null = null
 
   // Check if Eruda should be enabled
@@ -93,8 +88,7 @@ class ErudaService {
       try {
         // Import Eruda dynamically
         import('eruda').then((eruda) => {
-          window.eruda = eruda.default
-          this.isLoaded = true
+          window.eruda = eruda.default as ErudaInstance
           console.log('Eruda loaded successfully')
           resolve()
         }).catch((error) => {

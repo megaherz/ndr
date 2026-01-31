@@ -1,6 +1,6 @@
 module github.com/megaherz/ndr
 
-go 1.25.4
+go 1.25.6
 
 require (
 	github.com/centrifugal/gocent/v3 v3.4.0

@@ -76,7 +76,7 @@ func NewDB(cfg Config, logger *logrus.Logger) (*DB, error) {
 
 	// Test the connection
 	if err := db.PingContext(ctx); err != nil {
-		db.Close()
+		_ = db.Close() // Ignore close error since we're already returning an error
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
@@ -120,7 +120,7 @@ func (db *DB) HealthCheck(ctx context.Context) error {
 
 // GetStats returns database connection statistics
 func (db *DB) GetStats() sql.DBStats {
-	return db.DB.Stats()
+	return db.Stats()
 }
 
 // WithTransaction executes a function within a database transaction

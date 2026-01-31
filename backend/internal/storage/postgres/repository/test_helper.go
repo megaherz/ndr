@@ -85,7 +85,7 @@ func (h *TestDBHelper) SetupDatabase() {
 // TeardownDatabase closes the database connection and removes the container
 func (h *TestDBHelper) TeardownDatabase() {
 	if h.DB != nil {
-		h.DB.Close()
+		_ = h.DB.Close() // Ignore close error during cleanup
 	}
 	if h.Resource != nil {
 		err := h.Pool.Purge(h.Resource)

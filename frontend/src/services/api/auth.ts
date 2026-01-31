@@ -101,7 +101,7 @@ export async function loginWithTelegram(authPayload: TelegramAuthPayload): Promi
   } catch (error) {
     console.error('Login failed:', error)
     console.error('API Base URL:', API_BASE_URL)
-    console.error('Request payload:', loginRequest)
+    console.error('Request payload:', authPayload)
     
     // Re-throw with more context
     if (error instanceof Error) {
