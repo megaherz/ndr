@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -49,7 +48,7 @@ type TokenClaims struct {
 type authService struct {
 	userRepo      repository.UserRepository
 	walletRepo    repository.WalletRepository
-	jwtUtil       *auth.JWTUtil
+	jwtUtil       *auth.JWTManager
 	botToken      string
 	logger        *logrus.Logger
 }
@@ -58,7 +57,7 @@ type authService struct {
 func NewAuthService(
 	userRepo repository.UserRepository,
 	walletRepo repository.WalletRepository,
-	jwtUtil *auth.JWTUtil,
+	jwtUtil *auth.JWTManager,
 	botToken string,
 	logger *logrus.Logger,
 ) AuthService {
@@ -109,7 +108,7 @@ func (s *authService) Authenticate(ctx context.Context, initData string) (*AuthR
 	}
 	
 	// Generate JWT tokens
-	accessToken, err := s.jwtUtil.GenerateAccessToken(user.ID, telegramData.User.ID)
+	accessToken, err := s.jwtUtil.GenerateAppToken(user.ID, telegramData.User.ID, 24*time.Hour)
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"user_id": user.ID,
@@ -118,7 +117,7 @@ func (s *authService) Authenticate(ctx context.Context, initData string) (*AuthR
 		return nil, fmt.Errorf("failed to generate access token: %w", err)
 	}
 	
-	refreshToken, err := s.jwtUtil.GenerateRefreshToken(user.ID, telegramData.User.ID)
+	refreshToken, err := s.jwtUtil.GenerateCentrifugoToken(user.ID, telegramData.User.ID, 7*24*time.Hour)
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"user_id": user.ID,
@@ -183,13 +182,13 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*A
 	}
 	
 	// Generate new access token
-	accessToken, err := s.jwtUtil.GenerateAccessToken(claims.UserID, claims.TelegramID)
+	accessToken, err := s.jwtUtil.GenerateAppToken(claims.UserID, claims.TelegramID, 24*time.Hour)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token: %w", err)
 	}
 	
 	// Generate new refresh token
-	newRefreshToken, err := s.jwtUtil.GenerateRefreshToken(claims.UserID, claims.TelegramID)
+	newRefreshToken, err := s.jwtUtil.GenerateCentrifugoToken(claims.UserID, claims.TelegramID, 7*24*time.Hour)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
@@ -218,11 +217,11 @@ func (s *authService) ensureUserWallet(ctx context.Context, user *models.User) e
 	// Create new wallet
 	newWallet := &models.Wallet{
 		UserID:               user.ID,
-		TONBalance:           decimal.Zero,
+		TonBalance:           decimal.Zero,
 		FuelBalance:          decimal.Zero,
 		BurnBalance:          decimal.Zero,
 		RookieRacesCompleted: 0,
-		TONWalletAddress:     sql.NullString{},
+		TonWalletAddress:     nil,
 		CreatedAt:            time.Now(),
 		UpdatedAt:            time.Now(),
 	}

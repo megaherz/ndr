@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
-	"backend/internal/storage/postgres/models"
+	"ndr/internal/storage/postgres/models"
 )
 
 // UserRepository defines the interface for user data access
@@ -134,12 +134,20 @@ func (r *userRepository) GetOrCreateByTelegramID(ctx context.Context, telegramID
 	}
 	
 	// User doesn't exist, create new one
+	var usernamePtr, lastNamePtr *string
+	if username != "" {
+		usernamePtr = &username
+	}
+	if lastName != "" {
+		lastNamePtr = &lastName
+	}
+	
 	newUser := &models.User{
 		ID:                uuid.New(),
 		TelegramID:        telegramID,
-		TelegramUsername:  sql.NullString{String: username, Valid: username != ""},
+		TelegramUsername:  usernamePtr,
 		TelegramFirstName: firstName,
-		TelegramLastName:  sql.NullString{String: lastName, Valid: lastName != ""},
+		TelegramLastName:  lastNamePtr,
 		CreatedAt:         time.Now(),
 		UpdatedAt:         time.Now(),
 	}

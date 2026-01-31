@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/shopspring/decimal"
 
-	"backend/internal/storage/postgres/models"
+	"ndr/internal/storage/postgres/models"
 )
 
 // MatchRepository defines the interface for match data access

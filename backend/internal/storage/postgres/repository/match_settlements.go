@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
-	"backend/internal/storage/postgres/models"
+	"ndr/internal/storage/postgres/models"
 )
 
 // MatchSettlementRepository defines the interface for match settlement data access

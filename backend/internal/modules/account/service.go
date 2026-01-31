@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"backend/internal/constants"
-	"backend/internal/storage/postgres/models"
-	"backend/internal/storage/postgres/repository"
+	"ndr/internal/constants"
+	"ndr/internal/storage/postgres/models"
+	"ndr/internal/storage/postgres/repository"
 )
 
 // AccountService handles account and wallet operations
@@ -34,11 +34,11 @@ type AccountService interface {
 // WalletInfo represents comprehensive wallet information
 type WalletInfo struct {
 	UserID               uuid.UUID       `json:"user_id"`
-	TONBalance           decimal.Decimal `json:"ton_balance"`
+	TonBalance           decimal.Decimal `json:"ton_balance"`
 	FuelBalance          decimal.Decimal `json:"fuel_balance"`
 	BurnBalance          decimal.Decimal `json:"burn_balance"`
 	RookieRacesCompleted int             `json:"rookie_races_completed"`
-	TONWalletAddress     *string         `json:"ton_wallet_address,omitempty"`
+	TonWalletAddress     *string         `json:"ton_wallet_address,omitempty"`
 	LeagueAccess         LeagueAccess    `json:"league_access"`
 }
 
@@ -107,7 +107,7 @@ func (s *accountService) GetWallet(ctx context.Context, userID uuid.UUID) (*Wall
 	// Build wallet info
 	walletInfo := &WalletInfo{
 		UserID:               wallet.UserID,
-		TONBalance:           wallet.TONBalance,
+		TonBalance:           wallet.TonBalance,
 		FuelBalance:          wallet.FuelBalance,
 		BurnBalance:          wallet.BurnBalance,
 		RookieRacesCompleted: wallet.RookieRacesCompleted,
@@ -115,8 +115,8 @@ func (s *accountService) GetWallet(ctx context.Context, userID uuid.UUID) (*Wall
 	}
 	
 	// Add TON wallet address if present
-	if wallet.TONWalletAddress.Valid {
-		walletInfo.TONWalletAddress = &wallet.TONWalletAddress.String
+	if wallet.TonWalletAddress != nil {
+		walletInfo.TonWalletAddress = wallet.TonWalletAddress
 	}
 	
 	return walletInfo, nil

@@ -9,7 +9,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"backend/internal/storage/postgres/repository"
+	"ndr/internal/storage/postgres/repository"
 )
 
 // EarnPointsService handles the logic for players locking their scores
@@ -190,7 +190,7 @@ func (s *earnPointsService) LockScore(ctx context.Context, matchID, userID uuid.
 		LockTime:    lockTime,
 		Position:    position,
 		TotalScore:  totalScore,
-		Message:     fmt.Sprintf("Score locked at %.2f for Heat %d", requestedScore, state.CurrentHeat),
+		Message:     fmt.Sprintf("Score locked at %s for Heat %d", requestedScore.String(), state.CurrentHeat),
 	}, nil
 }
 
@@ -260,8 +260,8 @@ func (s *earnPointsService) ValidateScoreForTime(ctx context.Context, matchID uu
 	maxSpeedWithTolerance := s.physicsEngine.CalculateSpeed(actualHeatTime + toleranceTime)
 	
 	if score.GreaterThan(maxSpeedWithTolerance) {
-		return fmt.Errorf("score %.2f exceeds maximum possible speed %.2f at time %.2fs", 
-			score, maxSpeed, actualHeatTime)
+		return fmt.Errorf("score %s exceeds maximum possible speed %s at time %.2fs", 
+			score.String(), maxSpeed.String(), actualHeatTime)
 	}
 	
 	// Validate score is positive

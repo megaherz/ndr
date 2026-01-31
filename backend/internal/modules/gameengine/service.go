@@ -10,8 +10,8 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"backend/internal/storage/postgres/models"
-	"backend/internal/storage/postgres/repository"
+	"ndr/internal/storage/postgres/models"
+	"ndr/internal/storage/postgres/repository"
 )
 
 // GameEngineService handles game engine operations
@@ -136,7 +136,7 @@ func (s *gameEngineService) CreateMatch(ctx context.Context, league string, play
 	// Create match
 	match := &models.Match{
 		ID:                matchID,
-		League:            league,
+		League:            models.League(league),
 		Status:            "FORMING",
 		LivePlayerCount:   livePlayerCount,
 		GhostPlayerCount:  ghostPlayerCount,
@@ -313,7 +313,12 @@ func (s *gameEngineService) GetMatchState(ctx context.Context, matchID uuid.UUID
 			Heat1Score:  participant.Heat1Score,
 			Heat2Score:  participant.Heat2Score,
 			Heat3Score:  participant.Heat3Score,
-			TotalScore:  participant.TotalScore.Decimal,
+			TotalScore:  func() decimal.Decimal {
+				if participant.TotalScore != nil {
+					return *participant.TotalScore
+				}
+				return decimal.Zero
+			}(),
 			Position:    0, // TODO: Calculate position
 			IsAlive:     true, // TODO: Determine from current heat state
 			HasLocked:   false, // TODO: Determine from current heat state
@@ -324,8 +329,8 @@ func (s *gameEngineService) GetMatchState(ctx context.Context, matchID uuid.UUID
 	// Build match state
 	matchState := &MatchState{
 		MatchID:       matchID,
-		League:        match.League,
-		Status:        match.Status,
+		League:        string(match.League),
+		Status:        string(match.Status),
 		CurrentHeat:   1, // TODO: Determine from match state
 		HeatStatus:    HeatStatusWaiting, // TODO: Determine from heat manager
 		Players:       playerStates,

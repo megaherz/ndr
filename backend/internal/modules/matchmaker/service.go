@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"backend/internal/constants"
-	"backend/internal/modules/account"
-	"backend/internal/modules/gateway"
-	"backend/internal/modules/gateway/events"
+	"ndr/internal/constants"
+	"ndr/internal/modules/account"
+	"ndr/internal/modules/gateway"
 )
 
 // MatchmakerService handles matchmaking operations

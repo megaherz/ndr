@@ -11,9 +11,9 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"backend/internal/modules/gameengine"
-	"backend/internal/modules/gateway"
-	"backend/internal/modules/gateway/events"
+	"ndr/internal/modules/gameengine"
+	"ndr/internal/modules/gateway"
+	"ndr/internal/modules/gateway/events"
 )
 
 // LobbyManager handles lobby formation and management
@@ -283,7 +283,7 @@ func (lm *lobbyManager) startMatch(ctx context.Context, lobby *Lobby) error {
 func (lm *lobbyManager) publishMatchFoundEvents(ctx context.Context, lobby *Lobby) error {
 	// Calculate total buyin amount for prize pool
 	totalBuyin := decimal.Zero
-	for _, player := range lobby.Players {
+	for range lobby.Players {
 		totalBuyin = totalBuyin.Add(LeagueBuyins[lobby.League])
 	}
 	

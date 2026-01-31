@@ -2,7 +2,6 @@ package gameengine
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -10,12 +9,12 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"backend/internal/constants"
-	"backend/internal/modules/account"
-	"backend/internal/modules/gateway"
-	"backend/internal/modules/gateway/events"
-	"backend/internal/storage/postgres/models"
-	"backend/internal/storage/postgres/repository"
+	"ndr/internal/constants"
+	"ndr/internal/modules/account"
+	"ndr/internal/modules/gateway"
+	"ndr/internal/modules/gateway/events"
+	"ndr/internal/storage/postgres/models"
+	"ndr/internal/storage/postgres/repository"
 )
 
 // SettlementService handles match settlement and prize distribution
@@ -164,7 +163,7 @@ func (s *settlementService) SettleMatch(ctx context.Context, matchID uuid.UUID) 
 	}
 	
 	// Apply prize amounts to positions
-	s.applyPrizesToPositions(positions, prizeDistribution, match.League)
+	s.applyPrizesToPositions(positions, prizeDistribution, string(match.League))
 	
 	// Update participant records with final positions and prizes
 	err = s.updateParticipantResults(ctx, matchID, positions)
@@ -175,7 +174,7 @@ func (s *settlementService) SettleMatch(ctx context.Context, matchID uuid.UUID) 
 	// Create settlement record
 	settlement := &MatchSettlement{
 		MatchID:           matchID,
-		League:            match.League,
+		League:            string(match.League),
 		SettledAt:         time.Now(),
 		Positions:         positions,
 		PrizePool:         match.PrizePool,
@@ -246,10 +245,30 @@ func (s *settlementService) CalculatePositions(ctx context.Context, matchID uuid
 			UserID:      p.UserID,
 			DisplayName: p.PlayerDisplayName,
 			IsGhost:     p.IsGhost,
-			Heat1Score:  p.Heat1Score.Decimal,
-			Heat2Score:  p.Heat2Score.Decimal,
-			Heat3Score:  p.Heat3Score.Decimal,
-			TotalScore:  p.TotalScore.Decimal,
+			Heat1Score:  func() decimal.Decimal {
+				if p.Heat1Score != nil {
+					return *p.Heat1Score
+				}
+				return decimal.Zero
+			}(),
+			Heat2Score:  func() decimal.Decimal {
+				if p.Heat2Score != nil {
+					return *p.Heat2Score
+				}
+				return decimal.Zero
+			}(),
+			Heat3Score:  func() decimal.Decimal {
+				if p.Heat3Score != nil {
+					return *p.Heat3Score
+				}
+				return decimal.Zero
+			}(),
+			TotalScore:  func() decimal.Decimal {
+				if p.TotalScore != nil {
+					return *p.TotalScore
+				}
+				return decimal.Zero
+			}(),
 		}
 		positions = append(positions, position)
 	}
@@ -280,7 +299,7 @@ func (s *settlementService) CalculatePrizes(ctx context.Context, matchID uuid.UU
 	thirdPlace := prizePool.Mul(decimal.NewFromFloat(0.2)).Truncate(2)   // 20%
 	
 	// Get BURN rewards for this league
-	burnRewards := burnRewardTables[match.League]
+	burnRewards := burnRewardTables[string(match.League)]
 	if burnRewards == nil {
 		burnRewards = make(map[int]decimal.Decimal)
 	}
@@ -308,7 +327,10 @@ func (s *settlementService) ApplySettlement(ctx context.Context, matchID uuid.UU
 				Amount:        position.PrizeAmount,
 				OperationType: constants.OperationMatchPrize,
 				ReferenceID:   &matchID,
-				Description:   sql.NullString{String: fmt.Sprintf("Prize for position %d in %s league", position.FinalPosition, settlement.League), Valid: true},
+				Description:   func() *string {
+					desc := fmt.Sprintf("Prize for position %d in %s league", position.FinalPosition, settlement.League)
+					return &desc
+				}(),
 				CreatedAt:     settlement.SettledAt,
 			}
 			ledgerEntries = append(ledgerEntries, entry)
@@ -323,7 +345,10 @@ func (s *settlementService) ApplySettlement(ctx context.Context, matchID uuid.UU
 				Amount:        position.BurnReward,
 				OperationType: constants.OperationMatchBurnReward,
 				ReferenceID:   &matchID,
-				Description:   sql.NullString{String: fmt.Sprintf("BURN reward for position %d in %s league", position.FinalPosition, settlement.League), Valid: true},
+				Description:   func() *string {
+					desc := fmt.Sprintf("BURN reward for position %d in %s league", position.FinalPosition, settlement.League)
+					return &desc
+				}(),
 				CreatedAt:     settlement.SettledAt,
 			}
 			ledgerEntries = append(ledgerEntries, entry)
@@ -334,12 +359,18 @@ func (s *settlementService) ApplySettlement(ctx context.Context, matchID uuid.UU
 	if settlement.RakeAmount.GreaterThan(decimal.Zero) {
 		entry := &models.LedgerEntry{
 			UserID:        nil,
-			SystemWallet:  sql.NullString{String: constants.SystemWalletRakeFuel, Valid: true},
+			SystemWallet:  func() *string {
+				wallet := constants.SystemWalletRakeFuel
+				return &wallet
+			}(),
 			Currency:      "FUEL",
 			Amount:        settlement.RakeAmount,
 			OperationType: constants.OperationMatchRake,
 			ReferenceID:   &matchID,
-			Description:   sql.NullString{String: fmt.Sprintf("8%% rake from %s league match", settlement.League), Valid: true},
+			Description:   func() *string {
+				desc := fmt.Sprintf("8%% rake from %s league match", settlement.League)
+				return &desc
+			}(),
 			CreatedAt:     settlement.SettledAt,
 		}
 		ledgerEntries = append(ledgerEntries, entry)
@@ -352,12 +383,18 @@ func (s *settlementService) ApplySettlement(ctx context.Context, matchID uuid.UU
 			if position.PrizeAmount.GreaterThan(decimal.Zero) {
 				entry := &models.LedgerEntry{
 					UserID:        nil,
-					SystemWallet:  sql.NullString{String: constants.SystemWalletHouseFuel, Valid: true},
+					SystemWallet:  func() *string {
+						wallet := constants.SystemWalletHouseFuel
+						return &wallet
+					}(),
 					Currency:      constants.CurrencyFUEL,
 					Amount:        position.PrizeAmount.Neg(),
 					OperationType: constants.OperationMatchPrize,
 					ReferenceID:   &matchID,
-					Description:   sql.NullString{String: fmt.Sprintf("Ghost prize payout for position %d", position.FinalPosition), Valid: true},
+					Description:   func() *string {
+						desc := fmt.Sprintf("Ghost prize payout for position %d", position.FinalPosition)
+						return &desc
+					}(),
 					CreatedAt:     settlement.SettledAt,
 				}
 				ledgerEntries = append(ledgerEntries, entry)

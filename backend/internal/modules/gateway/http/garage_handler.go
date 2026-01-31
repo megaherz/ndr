@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
-	"backend/internal/modules/account"
+	"ndr/internal/modules/account"
 )
 
 // GarageHandler handles garage-related HTTP endpoints

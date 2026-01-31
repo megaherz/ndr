@@ -2,7 +2,6 @@ package account
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -10,9 +9,9 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"backend/internal/constants"
-	"backend/internal/storage/postgres/models"
-	"backend/internal/storage/postgres/repository"
+	"ndr/internal/constants"
+	"ndr/internal/storage/postgres/models"
+	"ndr/internal/storage/postgres/repository"
 )
 
 // LedgerOperations handles ledger entry operations
@@ -69,14 +68,19 @@ func (l *ledgerOperations) DebitFuel(ctx context.Context, userID uuid.UUID, amou
 	}
 	
 	// Create debit entry (negative amount)
+	var descPtr *string
+	if description != "" {
+		descPtr = &description
+	}
+	
 	entry := &models.LedgerEntry{
 		UserID:        &userID,
-		SystemWallet:  sql.NullString{},
+		SystemWallet:  nil,
 		Currency:      constants.CurrencyFUEL,
 		Amount:        amount.Neg(), // Negative for debit
-		OperationType: operationType,
+		OperationType: models.OperationType(operationType),
 		ReferenceID:   referenceID,
-		Description:   sql.NullString{String: description, Valid: description != ""},
+		Description:   descPtr,
 		CreatedAt:     time.Now(),
 	}
 	
@@ -102,14 +106,19 @@ func (l *ledgerOperations) CreditFuel(ctx context.Context, userID uuid.UUID, amo
 	}
 	
 	// Create credit entry (positive amount)
+	var descPtr *string
+	if description != "" {
+		descPtr = &description
+	}
+	
 	entry := &models.LedgerEntry{
 		UserID:        &userID,
-		SystemWallet:  sql.NullString{},
+		SystemWallet:  nil,
 		Currency:      constants.CurrencyFUEL,
 		Amount:        amount, // Positive for credit
-		OperationType: operationType,
+		OperationType: models.OperationType(operationType),
 		ReferenceID:   referenceID,
-		Description:   sql.NullString{String: description, Valid: description != ""},
+		Description:   descPtr,
 		CreatedAt:     time.Now(),
 	}
 	
@@ -135,14 +144,19 @@ func (l *ledgerOperations) CreditBurn(ctx context.Context, userID uuid.UUID, amo
 	}
 	
 	// Create credit entry (positive amount)
+	var descPtr *string
+	if description != "" {
+		descPtr = &description
+	}
+	
 	entry := &models.LedgerEntry{
 		UserID:        &userID,
-		SystemWallet:  sql.NullString{},
+		SystemWallet:  nil,
 		Currency:      constants.CurrencyBURN,
 		Amount:        amount, // Positive for credit
-		OperationType: operationType,
+		OperationType: models.OperationType(operationType),
 		ReferenceID:   referenceID,
-		Description:   sql.NullString{String: description, Valid: description != ""},
+		Description:   descPtr,
 		CreatedAt:     time.Now(),
 	}
 	
@@ -168,14 +182,19 @@ func (l *ledgerOperations) DebitSystemWallet(ctx context.Context, walletName str
 	}
 	
 	// Create debit entry (negative amount)
+	var descPtr *string
+	if description != "" {
+		descPtr = &description
+	}
+	
 	entry := &models.LedgerEntry{
 		UserID:        nil,
-		SystemWallet:  sql.NullString{String: walletName, Valid: true},
+		SystemWallet:  &walletName,
 		Currency:      constants.CurrencyFUEL,
 		Amount:        amount.Neg(), // Negative for debit
-		OperationType: operationType,
+		OperationType: models.OperationType(operationType),
 		ReferenceID:   referenceID,
-		Description:   sql.NullString{String: description, Valid: description != ""},
+		Description:   descPtr,
 		CreatedAt:     time.Now(),
 	}
 	
@@ -201,14 +220,19 @@ func (l *ledgerOperations) CreditSystemWallet(ctx context.Context, walletName st
 	}
 	
 	// Create credit entry (positive amount)
+	var descPtr *string
+	if description != "" {
+		descPtr = &description
+	}
+	
 	entry := &models.LedgerEntry{
 		UserID:        nil,
-		SystemWallet:  sql.NullString{String: walletName, Valid: true},
+		SystemWallet:  &walletName,
 		Currency:      constants.CurrencyFUEL,
 		Amount:        amount, // Positive for credit
-		OperationType: operationType,
+		OperationType: models.OperationType(operationType),
 		ReferenceID:   referenceID,
-		Description:   sql.NullString{String: description, Valid: description != ""},
+		Description:   descPtr,
 		CreatedAt:     time.Now(),
 	}
 	
@@ -284,7 +308,7 @@ func (l *ledgerOperations) RecordMatchEntries(ctx context.Context, entries []*mo
 	// Update wallet balances for user entries
 	for _, entry := range entries {
 		if entry.UserID != nil {
-			err := l.updateWalletBalance(ctx, *entry.UserID, entry.Currency, entry.Amount)
+			err := l.updateWalletBalance(ctx, *entry.UserID, string(entry.Currency), entry.Amount)
 			if err != nil {
 				l.logger.WithFields(logrus.Fields{
 					"user_id":  *entry.UserID,
@@ -307,26 +331,30 @@ func (l *ledgerOperations) TransferFuel(ctx context.Context, fromUserID, toUserI
 	}
 	
 	// Create debit entry for sender
+	debitDesc := fmt.Sprintf("Transfer to %s: %s", toUserID, description)
+	
 	debitEntry := &models.LedgerEntry{
 		UserID:        &fromUserID,
-		SystemWallet:  sql.NullString{},
+		SystemWallet:  nil,
 		Currency:      constants.CurrencyFUEL,
 		Amount:        amount.Neg(), // Negative for debit
-		OperationType: operationType,
+		OperationType: models.OperationType(operationType),
 		ReferenceID:   referenceID,
-		Description:   sql.NullString{String: fmt.Sprintf("Transfer to %s: %s", toUserID, description), Valid: true},
+		Description:   &debitDesc,
 		CreatedAt:     time.Now(),
 	}
 	
 	// Create credit entry for receiver
+	creditDesc := fmt.Sprintf("Transfer from %s: %s", fromUserID, description)
+	
 	creditEntry := &models.LedgerEntry{
 		UserID:        &toUserID,
-		SystemWallet:  sql.NullString{},
+		SystemWallet:  nil,
 		Currency:      constants.CurrencyFUEL,
 		Amount:        amount, // Positive for credit
-		OperationType: operationType,
+		OperationType: models.OperationType(operationType),
 		ReferenceID:   referenceID,
-		Description:   sql.NullString{String: fmt.Sprintf("Transfer from %s: %s", fromUserID, description), Valid: true},
+		Description:   &creditDesc,
 		CreatedAt:     time.Now(),
 	}
 	
@@ -368,7 +396,7 @@ func (l *ledgerOperations) recordEntryAndUpdateBalance(ctx context.Context, entr
 	
 	// Update wallet balance if it's a user entry
 	if entry.UserID != nil {
-		err = l.updateWalletBalance(ctx, *entry.UserID, entry.Currency, entry.Amount)
+		err = l.updateWalletBalance(ctx, *entry.UserID, string(entry.Currency), entry.Amount)
 		if err != nil {
 			return fmt.Errorf("failed to update wallet balance: %w", err)
 		}
