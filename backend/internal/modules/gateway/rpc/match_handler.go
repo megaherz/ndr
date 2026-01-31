@@ -41,9 +41,9 @@ type EarnPointsRequest struct {
 
 // EarnPointsResponse represents the response from earning points
 type EarnPointsResponse struct {
-	Success bool                           `json:"success"`
-	Result  *gameengine.EarnPointsResult   `json:"result,omitempty"`
-	Error   string                         `json:"error,omitempty"`
+	Success bool                         `json:"success"`
+	Result  *gameengine.EarnPointsResult `json:"result,omitempty"`
+	Error   string                       `json:"error,omitempty"`
 }
 
 // GetMatchInfoRequest represents the request to get match information
@@ -54,9 +54,9 @@ type GetMatchInfoRequest struct {
 
 // GetMatchInfoResponse represents the response with match information
 type GetMatchInfoResponse struct {
-	Success   bool                        `json:"success"`
-	HeatInfo  *gameengine.HeatInfo        `json:"heat_info,omitempty"`
-	Error     string                      `json:"error,omitempty"`
+	Success  bool                 `json:"success"`
+	HeatInfo *gameengine.HeatInfo `json:"heat_info,omitempty"`
+	Error    string               `json:"error,omitempty"`
 }
 
 // HandleEarnPoints handles the match.earn_points RPC call
@@ -66,10 +66,10 @@ func (h *MatchHandler) HandleEarnPoints(ctx context.Context, data []byte) ([]byt
 		h.logger.WithFields(logrus.Fields{
 			"error": err,
 		}).Warn("Failed to unmarshal earn points request")
-		
+
 		return h.errorResponse("Invalid request format")
 	}
-	
+
 	// Validate request
 	if req.MatchID == "" {
 		return h.errorResponse("match_id is required")
@@ -80,25 +80,25 @@ func (h *MatchHandler) HandleEarnPoints(ctx context.Context, data []byte) ([]byt
 	if req.Score == "" {
 		return h.errorResponse("score is required")
 	}
-	
+
 	// Parse match ID
 	matchID, err := uuid.Parse(req.MatchID)
 	if err != nil {
 		return h.errorResponse("Invalid match_id format")
 	}
-	
+
 	// Parse user ID
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		return h.errorResponse("Invalid user_id format")
 	}
-	
+
 	// Parse score
 	score, err := decimal.NewFromString(req.Score)
 	if err != nil {
 		return h.errorResponse("Invalid score format")
 	}
-	
+
 	// Lock the score
 	result, err := h.earnPointsService.LockScore(ctx, matchID, userID, score)
 	if err != nil {
@@ -108,10 +108,10 @@ func (h *MatchHandler) HandleEarnPoints(ctx context.Context, data []byte) ([]byt
 			"score":    score,
 			"error":    err,
 		}).Error("Failed to lock player score")
-		
+
 		return h.errorResponse(fmt.Sprintf("Failed to lock score: %s", err.Error()))
 	}
-	
+
 	h.logger.WithFields(logrus.Fields{
 		"match_id":    matchID,
 		"user_id":     userID,
@@ -120,13 +120,13 @@ func (h *MatchHandler) HandleEarnPoints(ctx context.Context, data []byte) ([]byt
 		"total_score": result.TotalScore,
 		"position":    result.Position,
 	}).Info("Player earned points via RPC")
-	
+
 	// Return success response
 	response := EarnPointsResponse{
 		Success: true,
 		Result:  result,
 	}
-	
+
 	return json.Marshal(response)
 }
 
@@ -137,21 +137,21 @@ func (h *MatchHandler) HandleGetMatchInfo(ctx context.Context, data []byte) ([]b
 		h.logger.WithFields(logrus.Fields{
 			"error": err,
 		}).Warn("Failed to unmarshal get match info request")
-		
+
 		return h.errorResponse("Invalid request format")
 	}
-	
+
 	// Validate request
 	if req.MatchID == "" {
 		return h.errorResponse("match_id is required")
 	}
-	
+
 	// Parse match ID
 	matchID, err := uuid.Parse(req.MatchID)
 	if err != nil {
 		return h.errorResponse("Invalid match_id format")
 	}
-	
+
 	// Get heat information
 	heatInfo, err := h.earnPointsService.GetCurrentHeatInfo(ctx, matchID)
 	if err != nil {
@@ -159,16 +159,16 @@ func (h *MatchHandler) HandleGetMatchInfo(ctx context.Context, data []byte) ([]b
 			"match_id": matchID,
 			"error":    err,
 		}).Error("Failed to get heat info")
-		
+
 		return h.errorResponse(fmt.Sprintf("Failed to get match info: %s", err.Error()))
 	}
-	
+
 	// Return success response
 	response := GetMatchInfoResponse{
 		Success:  true,
 		HeatInfo: heatInfo,
 	}
-	
+
 	return json.Marshal(response)
 }
 
@@ -178,11 +178,11 @@ func (h *MatchHandler) errorResponse(message string) ([]byte, error) {
 		Success: false,
 		Error:   message,
 	}
-	
+
 	data, err := json.Marshal(response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal error response: %w", err)
 	}
-	
+
 	return data, nil
 }

@@ -20,12 +20,12 @@ type DB struct {
 
 // Config holds database configuration
 type Config struct {
-	URL                string
-	MaxOpenConns       int
-	MaxIdleConns       int
-	ConnMaxLifetime    time.Duration
-	ConnMaxIdleTime    time.Duration
-	ConnectionTimeout  time.Duration
+	URL               string
+	MaxOpenConns      int
+	MaxIdleConns      int
+	ConnMaxLifetime   time.Duration
+	ConnMaxIdleTime   time.Duration
+	ConnectionTimeout time.Duration
 }
 
 // NewDB creates a new database connection
@@ -133,7 +133,7 @@ func (db *DB) WithTransaction(ctx context.Context, fn func(*sqlx.Tx) error) erro
 	defer func() {
 		if p := recover(); p != nil {
 			_ = tx.Rollback() // Ignore rollback error in panic recovery
-			panic(p) // Re-throw panic after rollback
+			panic(p)          // Re-throw panic after rollback
 		} else if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
 				db.logger.WithError(rollbackErr).Error("Failed to rollback transaction")

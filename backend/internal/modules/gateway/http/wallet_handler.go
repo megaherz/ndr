@@ -12,29 +12,29 @@ import (
 	"github.com/megaherz/ndr/internal/modules/account"
 )
 
-// GarageHandler handles garage-related HTTP endpoints
-type GarageHandler struct {
+// WalletHandler handles wallet-related HTTP endpoints
+type WalletHandler struct {
 	accountService account.AccountService
 	logger         *logrus.Logger
 }
 
-// NewGarageHandler creates a new garage handler
-func NewGarageHandler(accountService account.AccountService, logger *logrus.Logger) *GarageHandler {
-	return &GarageHandler{
+// NewWalletHandler creates a new wallet handler
+func NewWalletHandler(accountService account.AccountService, logger *logrus.Logger) *WalletHandler {
+	return &WalletHandler{
 		accountService: accountService,
 		logger:         logger,
 	}
 }
 
-// RegisterRoutes registers garage routes
-func (h *GarageHandler) RegisterRoutes(r chi.Router) {
-	r.Route("/garage", func(r chi.Router) {
-		r.Get("/", h.GetGarageInfo)
+// RegisterRoutes registers wallet routes
+func (h *WalletHandler) RegisterRoutes(r chi.Router) {
+	r.Route("/wallet", func(r chi.Router) {
+		r.Get("/", h.GetWallet)
 	})
 }
 
-// GetGarageInfo handles GET /api/v1/garage
-func (h *GarageHandler) GetGarageInfo(w http.ResponseWriter, r *http.Request) {
+// GetWallet handles GET /api/v1/wallet
+func (h *WalletHandler) GetWallet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// Get user ID from context (set by authentication middleware)
@@ -58,7 +58,7 @@ func (h *GarageHandler) GetGarageInfo(w http.ResponseWriter, r *http.Request) {
 		}).Error("Failed to get wallet information")
 
 		render.Status(r, http.StatusInternalServerError)
-		render.Render(w, r, NewErrorResponse("Failed to get garage information"))
+		render.Render(w, r, NewErrorResponse("Failed to get wallet information"))
 		return
 	}
 
@@ -66,15 +66,15 @@ func (h *GarageHandler) GetGarageInfo(w http.ResponseWriter, r *http.Request) {
 		"user_id":      userID,
 		"fuel_balance": walletInfo.FuelBalance,
 		"burn_balance": walletInfo.BurnBalance,
-	}).Debug("Retrieved garage information")
+	}).Debug("Retrieved wallet information")
 
-	// Return garage information
+	// Return wallet information
 	render.Status(r, http.StatusOK)
 	render.Render(w, r, NewSuccessResponse(walletInfo))
 }
 
 // getUserIDFromContext extracts user ID from the request context
-func (h *GarageHandler) getUserIDFromContext(r *http.Request) (uuid.UUID, error) {
+func (h *WalletHandler) getUserIDFromContext(r *http.Request) (uuid.UUID, error) {
 	// In a real implementation, this would extract the user ID from JWT claims
 	// stored in the context by the authentication middleware
 	// For now, we'll return a placeholder

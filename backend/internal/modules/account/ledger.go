@@ -18,25 +18,25 @@ import (
 type LedgerOperations interface {
 	// DebitFuel debits FUEL from a user's account
 	DebitFuel(ctx context.Context, userID uuid.UUID, amount decimal.Decimal, operationType string, referenceID *uuid.UUID, description string) error
-	
+
 	// CreditFuel credits FUEL to a user's account
 	CreditFuel(ctx context.Context, userID uuid.UUID, amount decimal.Decimal, operationType string, referenceID *uuid.UUID, description string) error
-	
+
 	// CreditBurn credits BURN to a user's account
 	CreditBurn(ctx context.Context, userID uuid.UUID, amount decimal.Decimal, operationType string, referenceID *uuid.UUID, description string) error
-	
+
 	// DebitSystemWallet debits FUEL from a system wallet
 	DebitSystemWallet(ctx context.Context, walletName string, amount decimal.Decimal, operationType string, referenceID *uuid.UUID, description string) error
-	
+
 	// CreditSystemWallet credits FUEL to a system wallet
 	CreditSystemWallet(ctx context.Context, walletName string, amount decimal.Decimal, operationType string, referenceID *uuid.UUID, description string) error
-	
+
 	// RecordEntry records a generic ledger entry
 	RecordEntry(ctx context.Context, entry *models.LedgerEntry) error
-	
+
 	// RecordMatchEntries records multiple ledger entries for a match atomically
 	RecordMatchEntries(ctx context.Context, entries []*models.LedgerEntry) error
-	
+
 	// TransferFuel transfers FUEL between users
 	TransferFuel(ctx context.Context, fromUserID, toUserID uuid.UUID, amount decimal.Decimal, operationType string, referenceID *uuid.UUID, description string) error
 }
@@ -66,13 +66,13 @@ func (l *ledgerOperations) DebitFuel(ctx context.Context, userID uuid.UUID, amou
 	if amount.LessThanOrEqual(decimal.Zero) {
 		return fmt.Errorf("debit amount must be positive")
 	}
-	
+
 	// Create debit entry (negative amount)
 	var descPtr *string
 	if description != "" {
 		descPtr = &description
 	}
-	
+
 	entry := &models.LedgerEntry{
 		UserID:        &userID,
 		SystemWallet:  nil,
@@ -83,7 +83,7 @@ func (l *ledgerOperations) DebitFuel(ctx context.Context, userID uuid.UUID, amou
 		Description:   descPtr,
 		CreatedAt:     time.Now(),
 	}
-	
+
 	// Record entry and update wallet balance
 	err := l.recordEntryAndUpdateBalance(ctx, entry)
 	if err != nil {
@@ -95,7 +95,7 @@ func (l *ledgerOperations) DebitFuel(ctx context.Context, userID uuid.UUID, amou
 		}).Error("Failed to debit FUEL")
 		return fmt.Errorf("failed to debit FUEL: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -104,13 +104,13 @@ func (l *ledgerOperations) CreditFuel(ctx context.Context, userID uuid.UUID, amo
 	if amount.LessThanOrEqual(decimal.Zero) {
 		return fmt.Errorf("credit amount must be positive")
 	}
-	
+
 	// Create credit entry (positive amount)
 	var descPtr *string
 	if description != "" {
 		descPtr = &description
 	}
-	
+
 	entry := &models.LedgerEntry{
 		UserID:        &userID,
 		SystemWallet:  nil,
@@ -121,7 +121,7 @@ func (l *ledgerOperations) CreditFuel(ctx context.Context, userID uuid.UUID, amo
 		Description:   descPtr,
 		CreatedAt:     time.Now(),
 	}
-	
+
 	// Record entry and update wallet balance
 	err := l.recordEntryAndUpdateBalance(ctx, entry)
 	if err != nil {
@@ -133,7 +133,7 @@ func (l *ledgerOperations) CreditFuel(ctx context.Context, userID uuid.UUID, amo
 		}).Error("Failed to credit FUEL")
 		return fmt.Errorf("failed to credit FUEL: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -142,13 +142,13 @@ func (l *ledgerOperations) CreditBurn(ctx context.Context, userID uuid.UUID, amo
 	if amount.LessThanOrEqual(decimal.Zero) {
 		return fmt.Errorf("credit amount must be positive")
 	}
-	
+
 	// Create credit entry (positive amount)
 	var descPtr *string
 	if description != "" {
 		descPtr = &description
 	}
-	
+
 	entry := &models.LedgerEntry{
 		UserID:        &userID,
 		SystemWallet:  nil,
@@ -159,7 +159,7 @@ func (l *ledgerOperations) CreditBurn(ctx context.Context, userID uuid.UUID, amo
 		Description:   descPtr,
 		CreatedAt:     time.Now(),
 	}
-	
+
 	// Record entry and update wallet balance
 	err := l.recordEntryAndUpdateBalance(ctx, entry)
 	if err != nil {
@@ -171,7 +171,7 @@ func (l *ledgerOperations) CreditBurn(ctx context.Context, userID uuid.UUID, amo
 		}).Error("Failed to credit BURN")
 		return fmt.Errorf("failed to credit BURN: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -180,13 +180,13 @@ func (l *ledgerOperations) DebitSystemWallet(ctx context.Context, walletName str
 	if amount.LessThanOrEqual(decimal.Zero) {
 		return fmt.Errorf("debit amount must be positive")
 	}
-	
+
 	// Create debit entry (negative amount)
 	var descPtr *string
 	if description != "" {
 		descPtr = &description
 	}
-	
+
 	entry := &models.LedgerEntry{
 		UserID:        nil,
 		SystemWallet:  &walletName,
@@ -197,7 +197,7 @@ func (l *ledgerOperations) DebitSystemWallet(ctx context.Context, walletName str
 		Description:   descPtr,
 		CreatedAt:     time.Now(),
 	}
-	
+
 	// Record entry (system wallets don't have direct balance updates)
 	err := l.ledgerRepo.CreateEntry(ctx, entry)
 	if err != nil {
@@ -209,7 +209,7 @@ func (l *ledgerOperations) DebitSystemWallet(ctx context.Context, walletName str
 		}).Error("Failed to debit system wallet")
 		return fmt.Errorf("failed to debit system wallet: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -218,13 +218,13 @@ func (l *ledgerOperations) CreditSystemWallet(ctx context.Context, walletName st
 	if amount.LessThanOrEqual(decimal.Zero) {
 		return fmt.Errorf("credit amount must be positive")
 	}
-	
+
 	// Create credit entry (positive amount)
 	var descPtr *string
 	if description != "" {
 		descPtr = &description
 	}
-	
+
 	entry := &models.LedgerEntry{
 		UserID:        nil,
 		SystemWallet:  &walletName,
@@ -235,7 +235,7 @@ func (l *ledgerOperations) CreditSystemWallet(ctx context.Context, walletName st
 		Description:   descPtr,
 		CreatedAt:     time.Now(),
 	}
-	
+
 	// Record entry (system wallets don't have direct balance updates)
 	err := l.ledgerRepo.CreateEntry(ctx, entry)
 	if err != nil {
@@ -247,7 +247,7 @@ func (l *ledgerOperations) CreditSystemWallet(ctx context.Context, walletName st
 		}).Error("Failed to credit system wallet")
 		return fmt.Errorf("failed to credit system wallet: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -263,17 +263,17 @@ func (l *ledgerOperations) RecordEntry(ctx context.Context, entry *models.Ledger
 	if entry.Amount.IsZero() {
 		return fmt.Errorf("amount cannot be zero")
 	}
-	
+
 	// Set created timestamp if not set
 	if entry.CreatedAt.IsZero() {
 		entry.CreatedAt = time.Now()
 	}
-	
+
 	// Record entry and update balance if it's a user entry
 	if entry.UserID != nil {
 		return l.recordEntryAndUpdateBalance(ctx, entry)
 	}
-	
+
 	// System wallet entry - just record
 	return l.ledgerRepo.CreateEntry(ctx, entry)
 }
@@ -283,7 +283,7 @@ func (l *ledgerOperations) RecordMatchEntries(ctx context.Context, entries []*mo
 	if len(entries) == 0 {
 		return nil
 	}
-	
+
 	// Validate all entries have the same reference ID (match ID)
 	var matchID *uuid.UUID
 	for i, entry := range entries {
@@ -293,18 +293,18 @@ func (l *ledgerOperations) RecordMatchEntries(ctx context.Context, entries []*mo
 			return fmt.Errorf("all match entries must have the same reference ID")
 		}
 	}
-	
+
 	// Record all entries atomically
 	err := l.ledgerRepo.CreateEntries(ctx, entries)
 	if err != nil {
 		l.logger.WithFields(logrus.Fields{
-			"match_id":     matchID,
-			"entry_count":  len(entries),
-			"error":        err,
+			"match_id":    matchID,
+			"entry_count": len(entries),
+			"error":       err,
 		}).Error("Failed to record match entries")
 		return fmt.Errorf("failed to record match entries: %w", err)
 	}
-	
+
 	// Update wallet balances for user entries
 	for _, entry := range entries {
 		if entry.UserID != nil {
@@ -320,7 +320,7 @@ func (l *ledgerOperations) RecordMatchEntries(ctx context.Context, entries []*mo
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -329,10 +329,10 @@ func (l *ledgerOperations) TransferFuel(ctx context.Context, fromUserID, toUserI
 	if amount.LessThanOrEqual(decimal.Zero) {
 		return fmt.Errorf("transfer amount must be positive")
 	}
-	
+
 	// Create debit entry for sender
 	debitDesc := fmt.Sprintf("Transfer to %s: %s", toUserID, description)
-	
+
 	debitEntry := &models.LedgerEntry{
 		UserID:        &fromUserID,
 		SystemWallet:  nil,
@@ -343,10 +343,10 @@ func (l *ledgerOperations) TransferFuel(ctx context.Context, fromUserID, toUserI
 		Description:   &debitDesc,
 		CreatedAt:     time.Now(),
 	}
-	
+
 	// Create credit entry for receiver
 	creditDesc := fmt.Sprintf("Transfer from %s: %s", fromUserID, description)
-	
+
 	creditEntry := &models.LedgerEntry{
 		UserID:        &toUserID,
 		SystemWallet:  nil,
@@ -357,7 +357,7 @@ func (l *ledgerOperations) TransferFuel(ctx context.Context, fromUserID, toUserI
 		Description:   &creditDesc,
 		CreatedAt:     time.Now(),
 	}
-	
+
 	// Record both entries atomically
 	entries := []*models.LedgerEntry{debitEntry, creditEntry}
 	err := l.ledgerRepo.CreateEntries(ctx, entries)
@@ -371,18 +371,18 @@ func (l *ledgerOperations) TransferFuel(ctx context.Context, fromUserID, toUserI
 		}).Error("Failed to transfer FUEL")
 		return fmt.Errorf("failed to transfer FUEL: %w", err)
 	}
-	
+
 	// Update wallet balances
 	err = l.updateWalletBalance(ctx, fromUserID, constants.CurrencyFUEL, amount.Neg())
 	if err != nil {
 		return fmt.Errorf("failed to update sender balance: %w", err)
 	}
-	
+
 	err = l.updateWalletBalance(ctx, toUserID, constants.CurrencyFUEL, amount)
 	if err != nil {
 		return fmt.Errorf("failed to update receiver balance: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -393,7 +393,7 @@ func (l *ledgerOperations) recordEntryAndUpdateBalance(ctx context.Context, entr
 	if err != nil {
 		return err
 	}
-	
+
 	// Update wallet balance if it's a user entry
 	if entry.UserID != nil {
 		err = l.updateWalletBalance(ctx, *entry.UserID, string(entry.Currency), entry.Amount)
@@ -401,14 +401,14 @@ func (l *ledgerOperations) recordEntryAndUpdateBalance(ctx context.Context, entr
 			return fmt.Errorf("failed to update wallet balance: %w", err)
 		}
 	}
-	
+
 	return nil
 }
 
 // updateWalletBalance updates the wallet balance for a specific currency
 func (l *ledgerOperations) updateWalletBalance(ctx context.Context, userID uuid.UUID, currency string, delta decimal.Decimal) error {
 	var tonDelta, fuelDelta, burnDelta decimal.Decimal
-	
+
 	switch currency {
 	case constants.CurrencyTON:
 		tonDelta = delta
@@ -419,6 +419,6 @@ func (l *ledgerOperations) updateWalletBalance(ctx context.Context, userID uuid.
 	default:
 		return fmt.Errorf("unsupported currency: %s", currency)
 	}
-	
+
 	return l.walletRepo.UpdateBalances(ctx, userID, tonDelta, fuelDelta, burnDelta)
 }

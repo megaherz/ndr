@@ -17,16 +17,16 @@ import (
 type AccountService interface {
 	// GetWallet retrieves wallet information for a user
 	GetWallet(ctx context.Context, userID uuid.UUID) (*WalletInfo, error)
-	
+
 	// GetBalance retrieves current balance for a user and currency
 	GetBalance(ctx context.Context, userID uuid.UUID, currency string) (decimal.Decimal, error)
-	
+
 	// HasSufficientBalance checks if user has enough balance for an operation
 	HasSufficientBalance(ctx context.Context, userID uuid.UUID, currency string, amount decimal.Decimal) (bool, error)
-	
+
 	// GetSystemWalletBalance retrieves balance for a system wallet
 	GetSystemWalletBalance(ctx context.Context, walletName string) (decimal.Decimal, error)
-	
+
 	// GetTransactionHistory retrieves transaction history for a user
 	GetTransactionHistory(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*models.LedgerEntry, error)
 }
@@ -44,10 +44,10 @@ type WalletInfo struct {
 
 // LeagueAccess represents which leagues the user can access
 type LeagueAccess struct {
-	Rookie   LeagueStatus `json:"rookie"`
-	Street   LeagueStatus `json:"street"`
-	Pro      LeagueStatus `json:"pro"`
-	TopFuel  LeagueStatus `json:"top_fuel"`
+	Rookie  LeagueStatus `json:"rookie"`
+	Street  LeagueStatus `json:"street"`
+	Pro     LeagueStatus `json:"pro"`
+	TopFuel LeagueStatus `json:"top_fuel"`
 }
 
 // LeagueStatus represents the status of a league for a user
@@ -96,14 +96,14 @@ func (s *accountService) GetWallet(ctx context.Context, userID uuid.UUID) (*Wall
 		}).Error("Failed to get wallet")
 		return nil, fmt.Errorf("failed to get wallet: %w", err)
 	}
-	
+
 	if wallet == nil {
 		return nil, fmt.Errorf("wallet not found for user %s", userID)
 	}
-	
+
 	// Calculate league access
 	leagueAccess := s.calculateLeagueAccess(wallet)
-	
+
 	// Build wallet info
 	walletInfo := &WalletInfo{
 		UserID:               wallet.UserID,
@@ -113,12 +113,12 @@ func (s *accountService) GetWallet(ctx context.Context, userID uuid.UUID) (*Wall
 		RookieRacesCompleted: wallet.RookieRacesCompleted,
 		LeagueAccess:         leagueAccess,
 	}
-	
+
 	// Add TON wallet address if present
 	if wallet.TonWalletAddress != nil {
 		walletInfo.TonWalletAddress = wallet.TonWalletAddress
 	}
-	
+
 	return walletInfo, nil
 }
 
@@ -133,7 +133,7 @@ func (s *accountService) GetBalance(ctx context.Context, userID uuid.UUID, curre
 		}).Error("Failed to get user balance")
 		return decimal.Zero, fmt.Errorf("failed to get balance: %w", err)
 	}
-	
+
 	return balance, nil
 }
 
@@ -143,7 +143,7 @@ func (s *accountService) HasSufficientBalance(ctx context.Context, userID uuid.U
 	if err != nil {
 		return false, err
 	}
-	
+
 	return balance.GreaterThanOrEqual(amount), nil
 }
 
@@ -157,7 +157,7 @@ func (s *accountService) GetSystemWalletBalance(ctx context.Context, walletName 
 		}).Error("Failed to get system wallet balance")
 		return decimal.Zero, fmt.Errorf("failed to get system wallet balance: %w", err)
 	}
-	
+
 	return balance, nil
 }
 
@@ -173,14 +173,14 @@ func (s *accountService) GetTransactionHistory(ctx context.Context, userID uuid.
 		}).Error("Failed to get transaction history")
 		return nil, fmt.Errorf("failed to get transaction history: %w", err)
 	}
-	
+
 	return entries, nil
 }
 
 // calculateLeagueAccess determines which leagues a user can access
 func (s *accountService) calculateLeagueAccess(wallet *models.Wallet) LeagueAccess {
 	access := LeagueAccess{}
-	
+
 	// Rookie league
 	if wallet.RookieRacesCompleted >= 3 {
 		access.Rookie = LeagueStatus{
@@ -200,7 +200,7 @@ func (s *accountService) calculateLeagueAccess(wallet *models.Wallet) LeagueAcce
 			BuyinCost:  RookieBuyin,
 		}
 	}
-	
+
 	// Street league
 	if wallet.FuelBalance.LessThan(StreetBuyin) {
 		access.Street = LeagueStatus{
@@ -214,7 +214,7 @@ func (s *accountService) calculateLeagueAccess(wallet *models.Wallet) LeagueAcce
 			BuyinCost:  StreetBuyin,
 		}
 	}
-	
+
 	// Pro league
 	if wallet.FuelBalance.LessThan(ProBuyin) {
 		access.Pro = LeagueStatus{
@@ -228,7 +228,7 @@ func (s *accountService) calculateLeagueAccess(wallet *models.Wallet) LeagueAcce
 			BuyinCost:  ProBuyin,
 		}
 	}
-	
+
 	// Top Fuel league
 	if wallet.FuelBalance.LessThan(TopFuelBuyin) {
 		access.TopFuel = LeagueStatus{
@@ -242,6 +242,6 @@ func (s *accountService) calculateLeagueAccess(wallet *models.Wallet) LeagueAcce
 			BuyinCost:  TopFuelBuyin,
 		}
 	}
-	
+
 	return access
 }

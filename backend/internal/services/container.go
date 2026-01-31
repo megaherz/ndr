@@ -40,8 +40,8 @@ type Container struct {
 	MatchSettlementRepo  repository.MatchSettlementRepository
 
 	// Utilities
-	JWTManager        *auth.JWTManager
-	CentrifugoClient  *centrifugo.Client
+	JWTManager       *auth.JWTManager
+	CentrifugoClient *centrifugo.Client
 
 	// Services
 	AuthService       authservice.AuthService
@@ -85,12 +85,12 @@ func NewContainer(cfg *config.Config, logger *logrus.Logger) (*Container, error)
 func (c *Container) initializeStorage() error {
 	// Initialize PostgreSQL
 	dbConfig := postgres.Config{
-		URL:                c.Config.DatabaseURL,
-		MaxOpenConns:       25,
-		MaxIdleConns:       5,
-		ConnMaxLifetime:    5 * time.Minute,
-		ConnMaxIdleTime:    1 * time.Minute,
-		ConnectionTimeout:  10 * time.Second,
+		URL:               c.Config.DatabaseURL,
+		MaxOpenConns:      25,
+		MaxIdleConns:      5,
+		ConnMaxLifetime:   5 * time.Minute,
+		ConnMaxIdleTime:   1 * time.Minute,
+		ConnectionTimeout: 10 * time.Second,
 	}
 
 	db, err := postgres.NewDB(dbConfig, c.Logger)
@@ -279,10 +279,10 @@ func (c *Container) runMigrations() error {
 	defer cancel()
 
 	migrationRunner := postgres.NewMigrationRunner(c.DB, c.Logger)
-	
+
 	// Determine migrations directory path
 	// This assumes the migrations are in the standard location relative to the binary
 	migrationsDir := "internal/storage/postgres/migrations"
-	
+
 	return migrationRunner.RunMigrations(ctx, migrationsDir)
 }

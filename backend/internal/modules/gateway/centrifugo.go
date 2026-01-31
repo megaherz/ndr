@@ -16,13 +16,13 @@ import (
 type CentrifugoPublisher interface {
 	// PublishToUser publishes an event to a user's personal channel
 	PublishToUser(ctx context.Context, userID uuid.UUID, eventType string, data interface{}) error
-	
+
 	// PublishToMatch publishes an event to a match channel
 	PublishToMatch(ctx context.Context, matchID uuid.UUID, eventType string, data interface{}) error
-	
+
 	// PublishToUsers publishes an event to multiple user channels
 	PublishToUsers(ctx context.Context, userIDs []uuid.UUID, eventType string, data interface{}) error
-	
+
 	// BroadcastToChannel publishes an event to a specific channel
 	BroadcastToChannel(ctx context.Context, channel string, eventType string, data interface{}) error
 }
@@ -67,7 +67,7 @@ func (p *centrifugoPublisher) PublishToUsers(ctx context.Context, userIDs []uuid
 	if err != nil {
 		return fmt.Errorf("failed to prepare event message: %w", err)
 	}
-	
+
 	// Publish to each user channel
 	for _, userID := range userIDs {
 		channel := fmt.Sprintf("user:%s", userID.String())
@@ -81,7 +81,7 @@ func (p *centrifugoPublisher) PublishToUsers(ctx context.Context, userIDs []uuid
 			}).Error("Failed to publish event to user")
 		}
 	}
-	
+
 	return nil
 }
 
@@ -91,7 +91,7 @@ func (p *centrifugoPublisher) BroadcastToChannel(ctx context.Context, channel st
 	if err != nil {
 		return fmt.Errorf("failed to prepare event message: %w", err)
 	}
-	
+
 	return p.publishMessage(ctx, channel, message)
 }
 
@@ -102,7 +102,7 @@ func (p *centrifugoPublisher) prepareEventMessage(eventType string, data interfa
 		Data:      data,
 		Timestamp: getCurrentTimestamp(),
 	}
-	
+
 	return message, nil
 }
 
@@ -113,7 +113,7 @@ func (p *centrifugoPublisher) publishMessage(ctx context.Context, channel string
 	if err != nil {
 		return fmt.Errorf("failed to marshal event message: %w", err)
 	}
-	
+
 	// Publish to Centrifugo
 	err = p.client.Publish(ctx, channel, messageData)
 	if err != nil {
@@ -124,12 +124,12 @@ func (p *centrifugoPublisher) publishMessage(ctx context.Context, channel string
 		}).Error("Failed to publish event to Centrifugo")
 		return fmt.Errorf("failed to publish to channel %s: %w", channel, err)
 	}
-	
+
 	p.logger.WithFields(logrus.Fields{
 		"channel":    channel,
 		"event_type": message.Type,
 	}).Debug("Successfully published event to Centrifugo")
-	
+
 	return nil
 }
 

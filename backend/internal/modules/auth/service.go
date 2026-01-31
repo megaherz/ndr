@@ -18,10 +18,10 @@ import (
 type AuthService interface {
 	// Authenticate validates Telegram initData and returns JWT tokens
 	Authenticate(ctx context.Context, initData string) (*AuthResult, error)
-	
+
 	// ValidateToken validates a JWT token and returns user info
 	ValidateToken(ctx context.Context, token string) (*TokenClaims, error)
-	
+
 	// RefreshToken generates a new access token from a refresh token
 	RefreshToken(ctx context.Context, refreshToken string) (*AuthResult, error)
 }
@@ -31,26 +31,26 @@ type AuthResult struct {
 	User         *models.User `json:"user"`
 	AccessToken  string       `json:"access_token"`
 	RefreshToken string       `json:"refresh_token"`
-	ExpiresIn    int64        `json:"expires_in"`    // Access token expiry in seconds
-	TokenType    string       `json:"token_type"`    // "Bearer"
+	ExpiresIn    int64        `json:"expires_in"` // Access token expiry in seconds
+	TokenType    string       `json:"token_type"` // "Bearer"
 }
 
 // TokenClaims represents the claims in a JWT token
 type TokenClaims struct {
-	UserID       uuid.UUID `json:"user_id"`
-	TelegramID   int64     `json:"telegram_id"`
-	IssuedAt     int64     `json:"iat"`
-	ExpiresAt    int64     `json:"exp"`
-	TokenType    string    `json:"token_type"` // "access" or "refresh"
+	UserID     uuid.UUID `json:"user_id"`
+	TelegramID int64     `json:"telegram_id"`
+	IssuedAt   int64     `json:"iat"`
+	ExpiresAt  int64     `json:"exp"`
+	TokenType  string    `json:"token_type"` // "access" or "refresh"
 }
 
 // authService implements AuthService
 type authService struct {
-	userRepo      repository.UserRepository
-	walletRepo    repository.WalletRepository
-	jwtUtil       *auth.JWTManager
-	botToken      string
-	logger        *logrus.Logger
+	userRepo   repository.UserRepository
+	walletRepo repository.WalletRepository
+	jwtUtil    *auth.JWTManager
+	botToken   string
+	logger     *logrus.Logger
 }
 
 // NewAuthService creates a new authentication service
@@ -80,7 +80,7 @@ func (s *authService) Authenticate(ctx context.Context, initData string) (*AuthR
 		}).Warn("Invalid Telegram initData")
 		return nil, fmt.Errorf("invalid telegram data: %w", err)
 	}
-	
+
 	// Get or create user
 	user, err := s.userRepo.GetOrCreateByTelegramID(
 		ctx,
@@ -97,7 +97,7 @@ func (s *authService) Authenticate(ctx context.Context, initData string) (*AuthR
 		}).Error("Failed to get or create user")
 		return nil, fmt.Errorf("failed to get or create user: %w", err)
 	}
-	
+
 	// Ensure user has a wallet
 	err = s.ensureUserWallet(ctx, user)
 	if err != nil {
@@ -107,7 +107,7 @@ func (s *authService) Authenticate(ctx context.Context, initData string) (*AuthR
 		}).Error("Failed to ensure user wallet")
 		return nil, fmt.Errorf("failed to ensure user wallet: %w", err)
 	}
-	
+
 	// Generate JWT tokens
 	accessToken, err := s.jwtUtil.GenerateAppToken(user.ID, telegramData.User.ID, 24*time.Hour)
 	if err != nil {
@@ -117,7 +117,7 @@ func (s *authService) Authenticate(ctx context.Context, initData string) (*AuthR
 		}).Error("Failed to generate access token")
 		return nil, fmt.Errorf("failed to generate access token: %w", err)
 	}
-	
+
 	refreshToken, err := s.jwtUtil.GenerateCentrifugoToken(user.ID, telegramData.User.ID, 7*24*time.Hour)
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
@@ -126,12 +126,12 @@ func (s *authService) Authenticate(ctx context.Context, initData string) (*AuthR
 		}).Error("Failed to generate refresh token")
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
-	
+
 	s.logger.WithFields(logrus.Fields{
 		"user_id":     user.ID,
 		"telegram_id": telegramData.User.ID,
 	}).Info("User authenticated successfully")
-	
+
 	return &AuthResult{
 		User:         user,
 		AccessToken:  accessToken,
@@ -147,7 +147,7 @@ func (s *authService) ValidateToken(ctx context.Context, token string) (*TokenCl
 	if err != nil {
 		return nil, fmt.Errorf("invalid token: %w", err)
 	}
-	
+
 	// Convert JWT claims to our TokenClaims struct
 	tokenClaims := &TokenClaims{
 		UserID:     claims.UserID,
@@ -156,7 +156,7 @@ func (s *authService) ValidateToken(ctx context.Context, token string) (*TokenCl
 		ExpiresAt:  claims.ExpiresAt.Unix(),
 		TokenType:  claims.TokenType,
 	}
-	
+
 	return tokenClaims, nil
 }
 
@@ -167,12 +167,12 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*A
 	if err != nil {
 		return nil, fmt.Errorf("invalid refresh token: %w", err)
 	}
-	
+
 	// Ensure it's a refresh token
 	if claims.TokenType != "refresh" {
 		return nil, fmt.Errorf("token is not a refresh token")
 	}
-	
+
 	// Get user to ensure they still exist
 	user, err := s.userRepo.GetByID(ctx, claims.UserID)
 	if err != nil {
@@ -181,19 +181,19 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*A
 	if user == nil {
 		return nil, fmt.Errorf("user not found")
 	}
-	
+
 	// Generate new access token
 	accessToken, err := s.jwtUtil.GenerateAppToken(claims.UserID, claims.TelegramID, 24*time.Hour)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token: %w", err)
 	}
-	
+
 	// Generate new refresh token
 	newRefreshToken, err := s.jwtUtil.GenerateCentrifugoToken(claims.UserID, claims.TelegramID, 7*24*time.Hour)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
-	
+
 	return &AuthResult{
 		User:         user,
 		AccessToken:  accessToken,
@@ -210,11 +210,11 @@ func (s *authService) ensureUserWallet(ctx context.Context, user *models.User) e
 	if err != nil {
 		return err
 	}
-	
+
 	if wallet != nil {
 		return nil // Wallet already exists
 	}
-	
+
 	// Create new wallet
 	newWallet := &models.Wallet{
 		UserID:               user.ID,
@@ -226,6 +226,6 @@ func (s *authService) ensureUserWallet(ctx context.Context, user *models.User) e
 		CreatedAt:            time.Now(),
 		UpdatedAt:            time.Now(),
 	}
-	
+
 	return s.walletRepo.Create(ctx, newWallet)
 }
