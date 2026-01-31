@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:debug": "VITE_ENABLE_ERUDA=true vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
@@ -18,35 +19,36 @@
     "generate-types:payments": "openapi-typescript ../specs/001-nitro-drag-mvp/contracts/http/payments.json -o src/types/api/payments.ts"
   },
   "dependencies": {
+    "@pixi/react": "^7.1.2",
+    "@tanstack/react-query": "^5.8.0",
+    "@tonconnect/ui-react": "^2.0.0",
+    "centrifuge": "^4.0.0",
+    "decimal.js": "^10.4.0",
+    "i18next": "^23.7.0",
+    "pixi.js": "^7.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.20.0",
-    "pixi.js": "^7.3.0",
-    "@pixi/react": "^7.1.2",
-    "centrifuge": "^4.0.0",
-    "@tonconnect/ui-react": "^2.0.0",
-    "zustand": "^4.4.0",
-    "@tanstack/react-query": "^5.8.0",
-    "decimal.js": "^10.4.0",
     "react-i18next": "^13.5.0",
-    "i18next": "^23.7.0"
+    "react-router-dom": "^6.20.0",
+    "zustand": "^4.4.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.0",
+    "@testing-library/react": "^14.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react": "^4.1.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "@vitest/ui": "^1.0.0",
+    "eruda": "^3.4.3",
     "eslint": "^8.45.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
+    "openapi-typescript": "^6.7.0",
     "typescript": "^5.0.0",
     "vite": "^5.0.0",
-    "vitest": "^1.0.0",
-    "@vitest/ui": "^1.0.0",
-    "@vitest/coverage-v8": "^1.0.0",
-    "@testing-library/react": "^14.0.0",
-    "@testing-library/jest-dom": "^6.1.0",
-    "openapi-typescript": "^6.7.0"
+    "vitest": "^1.0.0"
   }
 }

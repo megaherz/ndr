@@ -2,6 +2,9 @@
 // This service handles authentication-related API requests
 
 import { apiClient, APIResponse } from './client'
+
+// Get API base URL for debugging
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'
 import { TelegramAuthPayload } from '../auth/telegram'
 import { User, AuthTokens } from '../../stores/authStore'
 
@@ -97,6 +100,8 @@ export async function loginWithTelegram(authPayload: TelegramAuthPayload): Promi
 
   } catch (error) {
     console.error('Login failed:', error)
+    console.error('API Base URL:', API_BASE_URL)
+    console.error('Request payload:', loginRequest)
     
     // Re-throw with more context
     if (error instanceof Error) {

@@ -15,6 +15,8 @@ import GasStation from './pages/GasStation'
 import { initializeTelegramWebApp } from './services/telegram/webapp'
 import { extractTelegramInitData } from './services/auth/telegram'
 import { loginWithTelegram } from './services/api/auth'
+import { initializeEruda } from './services/debug/eruda'
+import './services/debug' // Initialize debug utilities
 
 // Stores
 import { useAuthStore } from './stores/authStore'
@@ -57,6 +59,9 @@ function App() {
 
         // Initialize Telegram WebApp first
         initializeTelegramWebApp()
+
+        // Initialize Eruda debug console (only in dev/debug mode)
+        await initializeEruda()
 
         // Wait a bit for Telegram WebApp to fully initialize
         await new Promise(resolve => setTimeout(resolve, 100))

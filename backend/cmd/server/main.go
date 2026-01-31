@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"os"
 	"os/signal"
@@ -34,6 +35,9 @@ func main() {
 
 	// Initialize metrics
 	metricsInstance := metrics.New()
+
+	// TODO: Initialize database connection and proper auth service
+	// For now, we'll create a temporary auth endpoint to test connectivity
 
 	// Setup HTTP router
 	r := chi.NewRouter()
@@ -68,12 +72,77 @@ func main() {
 		w.Write([]byte(`{"status":"ok","service":"nitro-drag-royale"}`))
 	})
 
-	// API routes (placeholder)
+	// API routes
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`{"message":"Nitro Drag Royale API v1","status":"ready"}`))
+		})
+		
+		// Temporary auth endpoint for testing
+		r.Post("/auth/telegram", func(w http.ResponseWriter, r *http.Request) {
+			// Log the request for debugging
+			logrus.Info("Received auth request")
+			
+			// Read and parse request body
+			var requestBody map[string]interface{}
+			if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+				logrus.WithError(err).Error("Failed to decode request body")
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(`{"error":"Invalid request body"}`))
+				return
+			}
+			
+			logrus.WithField("request", requestBody).Info("Auth request body")
+			
+			// Extract user data from request if available
+			userID := "temp-user-id"
+			telegramID := int64(123456789)
+			username := "testuser"
+			firstName := "Test"
+			lastName := "User"
+			
+			if user, ok := requestBody["user"].(map[string]interface{}); ok {
+				if id, ok := user["id"].(float64); ok {
+					telegramID = int64(id)
+				}
+				if name, ok := user["username"].(string); ok && name != "" {
+					username = name
+				}
+				if name, ok := user["first_name"].(string); ok && name != "" {
+					firstName = name
+				}
+				if name, ok := user["last_name"].(string); ok && name != "" {
+					lastName = name
+				}
+			}
+			
+			// Generate response with actual user data
+			response := map[string]interface{}{
+				"data": map[string]interface{}{
+					"user": map[string]interface{}{
+						"id":                    userID,
+						"telegram_id":           telegramID,
+						"telegram_username":     username,
+						"telegram_first_name":   firstName,
+						"telegram_last_name":    lastName,
+						"created_at":           time.Now().Format(time.RFC3339),
+						"updated_at":           time.Now().Format(time.RFC3339),
+					},
+					"tokens": map[string]interface{}{
+						"app_token":        "temp.jwt.token.for." + username,
+						"centrifugo_token": "temp.centrifugo.token.for." + username,
+						"expires_at":       time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+					},
+				},
+				"success":   true,
+				"timestamp": time.Now().Format(time.RFC3339),
+			}
+			
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(response)
 		})
 	})
 
