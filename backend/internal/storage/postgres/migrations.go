@@ -3,17 +3,15 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"io/fs"
-	"os"
 	"path/filepath"
-	"sort"
-	"strings"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/sirupsen/logrus"
 )
 
-// MigrationRunner handles database migrations
+// MigrationRunner handles database migrations using golang-migrate
 type MigrationRunner struct {
 	db     *DB
 	logger *logrus.Logger
@@ -27,149 +25,66 @@ func NewMigrationRunner(db *DB, logger *logrus.Logger) *MigrationRunner {
 	}
 }
 
-// RunMigrations executes all pending migrations
+// RunMigrations executes all pending migrations using golang-migrate
 func (m *MigrationRunner) RunMigrations(ctx context.Context, migrationsDir string) error {
-	// Ensure migrations table exists
-	if err := m.ensureMigrationsTable(ctx); err != nil {
-		return fmt.Errorf("failed to create migrations table: %w", err)
-	}
+	m.logger.Info("Starting database migrations")
 
-	// Get list of migration files
-	migrationFiles, err := m.getMigrationFiles(migrationsDir)
+	// Create a database driver instance
+	driver, err := postgres.WithInstance(m.db.DB.DB, &postgres.Config{})
 	if err != nil {
-		return fmt.Errorf("failed to get migration files: %w", err)
+		return fmt.Errorf("failed to create postgres driver: %w", err)
 	}
 
-	// Get applied migrations
-	appliedMigrations, err := m.getAppliedMigrations(ctx)
+	// Get absolute path for migrations
+	absPath, err := filepath.Abs(migrationsDir)
 	if err != nil {
-		return fmt.Errorf("failed to get applied migrations: %w", err)
+		return fmt.Errorf("failed to get absolute path for migrations: %w", err)
 	}
 
-	// Apply pending migrations
-	for _, file := range migrationFiles {
-		if strings.HasSuffix(file, ".down.sql") {
-			continue // Skip down migrations
-		}
-
-		migrationName := m.getMigrationName(file)
-		if appliedMigrations[migrationName] {
-			continue // Already applied
-		}
-
-		if err := m.applyMigration(ctx, migrationsDir, file, migrationName); err != nil {
-			return fmt.Errorf("failed to apply migration %s: %w", migrationName, err)
-		}
-	}
-
-	return nil
-}
-
-// ensureMigrationsTable creates the migrations tracking table if it doesn't exist
-func (m *MigrationRunner) ensureMigrationsTable(ctx context.Context) error {
-	query := `
-		CREATE TABLE IF NOT EXISTS schema_migrations (
-			version VARCHAR(255) PRIMARY KEY,
-			applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-		)`
-
-	_, err := m.db.ExecContext(ctx, query)
-	return err
-}
-
-// getMigrationFiles returns a sorted list of migration files
-func (m *MigrationRunner) getMigrationFiles(migrationsDir string) ([]string, error) {
-	var files []string
-
-	err := filepath.WalkDir(migrationsDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !d.IsDir() && strings.HasSuffix(path, ".sql") {
-			files = append(files, filepath.Base(path))
-		}
-
-		return nil
-	})
-
+	// Create migrate instance
+	migrator, err := migrate.NewWithDatabaseInstance(
+		fmt.Sprintf("file://%s", absPath),
+		"postgres",
+		driver,
+	)
 	if err != nil {
-		return nil, err
-	}
-
-	// Sort files to ensure consistent order
-	sort.Strings(files)
-	return files, nil
-}
-
-// getAppliedMigrations returns a map of applied migration names
-func (m *MigrationRunner) getAppliedMigrations(ctx context.Context) (map[string]bool, error) {
-	query := `SELECT version FROM schema_migrations`
-	rows, err := m.db.QueryContext(ctx, query)
-	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to create migrator: %w", err)
 	}
 	defer func() {
-		_ = rows.Close() // Ignore close error in defer
+		if sourceErr, dbErr := migrator.Close(); sourceErr != nil || dbErr != nil {
+			m.logger.WithFields(logrus.Fields{
+				"source_error": sourceErr,
+				"db_error":     dbErr,
+			}).Warn("Error closing migrator")
+		}
 	}()
 
-	applied := make(map[string]bool)
-	for rows.Next() {
-		var version string
-		if err := rows.Scan(&version); err != nil {
-			return nil, err
+	// Run migrations
+	if err := migrator.Up(); err != nil {
+		if err == migrate.ErrNoChange {
+			m.logger.Info("No new migrations to apply")
+			return nil
 		}
-		applied[version] = true
+		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	return applied, rows.Err()
-}
-
-// getMigrationName extracts the migration name from a filename
-func (m *MigrationRunner) getMigrationName(filename string) string {
-	// Remove .up.sql suffix
-	name := strings.TrimSuffix(filename, ".up.sql")
-	return name
-}
-
-// applyMigration applies a single migration
-func (m *MigrationRunner) applyMigration(ctx context.Context, migrationsDir, filename, migrationName string) error {
-	m.logger.WithField("migration", migrationName).Info("Applying migration")
-
-	// Read migration file
-	migrationPath := filepath.Join(migrationsDir, filename)
-	migrationSQL, err := os.ReadFile(migrationPath)
-	if err != nil {
-		return fmt.Errorf("failed to read migration file: %w", err)
-	}
-
-	// Execute migration in transaction
-	return m.db.WithTransaction(ctx, func(tx *sqlx.Tx) error {
-		// Execute migration SQL
-		_, err := tx.ExecContext(ctx, string(migrationSQL))
-		if err != nil {
-			return fmt.Errorf("failed to execute migration SQL: %w", err)
-		}
-
-		// Record migration as applied
-		_, err = tx.ExecContext(ctx, 
-			`INSERT INTO schema_migrations (version) VALUES ($1)`, 
-			migrationName)
-		if err != nil {
-			return fmt.Errorf("failed to record migration: %w", err)
-		}
-
-		m.logger.WithField("migration", migrationName).Info("Migration applied successfully")
-		return nil
-	})
+	m.logger.Info("Database migrations completed successfully")
+	return nil
 }
 
 // GetAppliedMigrations returns a list of applied migrations for status checking
 func (m *MigrationRunner) GetAppliedMigrations(ctx context.Context) ([]string, error) {
-	query := `SELECT version FROM schema_migrations ORDER BY applied_at`
+
+	// Query the schema_migrations table directly
+	// The golang-migrate package uses 'schema_migrations' table by default
+	query := `SELECT version FROM schema_migrations ORDER BY version`
 	rows, err := m.db.QueryContext(ctx, query)
 	if err != nil {
-		return nil, err
+		// If table doesn't exist, return empty list
+		if err.Error() == `pq: relation "schema_migrations" does not exist` {
+			return []string{}, nil
+		}
+		return nil, fmt.Errorf("failed to query migrations: %w", err)
 	}
 	defer func() {
 		_ = rows.Close() // Ignore close error in defer
@@ -179,10 +94,53 @@ func (m *MigrationRunner) GetAppliedMigrations(ctx context.Context) ([]string, e
 	for rows.Next() {
 		var version string
 		if err := rows.Scan(&version); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan migration version: %w", err)
 		}
 		migrations = append(migrations, version)
 	}
 
 	return migrations, rows.Err()
+}
+
+// GetMigrationVersion returns the current migration version
+func (m *MigrationRunner) GetMigrationVersion(migrationsDir string) (uint, bool, error) {
+	// Create a database driver instance
+	driver, err := postgres.WithInstance(m.db.DB.DB, &postgres.Config{})
+	if err != nil {
+		return 0, false, fmt.Errorf("failed to create postgres driver: %w", err)
+	}
+
+	// Get absolute path for migrations
+	absPath, err := filepath.Abs(migrationsDir)
+	if err != nil {
+		return 0, false, fmt.Errorf("failed to get absolute path for migrations: %w", err)
+	}
+
+	// Create migrate instance
+	migrator, err := migrate.NewWithDatabaseInstance(
+		fmt.Sprintf("file://%s", absPath),
+		"postgres",
+		driver,
+	)
+	if err != nil {
+		return 0, false, fmt.Errorf("failed to create migrator: %w", err)
+	}
+	defer func() {
+		if sourceErr, dbErr := migrator.Close(); sourceErr != nil || dbErr != nil {
+			m.logger.WithFields(logrus.Fields{
+				"source_error": sourceErr,
+				"db_error":     dbErr,
+			}).Warn("Error closing migrator")
+		}
+	}()
+
+	version, dirty, err := migrator.Version()
+	if err != nil {
+		if err == migrate.ErrNilVersion {
+			return 0, false, nil // No migrations applied yet
+		}
+		return 0, false, fmt.Errorf("failed to get migration version: %w", err)
+	}
+
+	return version, dirty, nil
 }
