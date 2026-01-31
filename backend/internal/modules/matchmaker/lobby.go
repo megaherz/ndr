@@ -8,9 +8,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
 	"backend/internal/modules/gameengine"
+	"backend/internal/modules/gateway"
+	"backend/internal/modules/gateway/events"
 )
 
 // LobbyManager handles lobby formation and management
@@ -58,6 +61,7 @@ const (
 type lobbyManager struct {
 	queueOps      QueueOperations
 	gameEngine    gameengine.GameEngineService
+	publisher     gateway.CentrifugoPublisher
 	activeLobies  map[uuid.UUID]*Lobby // In-memory lobby storage
 	userToLobby   map[uuid.UUID]uuid.UUID // User to lobby mapping
 	logger        *logrus.Logger
@@ -67,11 +71,13 @@ type lobbyManager struct {
 func NewLobbyManager(
 	queueOps QueueOperations,
 	gameEngine gameengine.GameEngineService,
+	publisher gateway.CentrifugoPublisher,
 	logger *logrus.Logger,
 ) LobbyManager {
 	return &lobbyManager{
 		queueOps:     queueOps,
 		gameEngine:   gameEngine,
+		publisher:    publisher,
 		activeLobies: make(map[uuid.UUID]*Lobby),
 		userToLobby:  make(map[uuid.UUID]uuid.UUID),
 		logger:       logger,
@@ -143,8 +149,15 @@ func (lm *lobbyManager) FormLobby(ctx context.Context, league string) (*Lobby, e
 		"player_count": len(lobby.Players),
 	}).Info("Lobby formed successfully")
 	
-	// TODO: Notify players via Centrifugo that match was found
-	// This would publish match_found events to each player's user:{user_id} channel
+	// Notify players via Centrifugo that match was found (T059)
+	err = lm.publishMatchFoundEvents(ctx, lobby)
+	if err != nil {
+		lm.logger.WithFields(logrus.Fields{
+			"lobby_id": lobby.ID,
+			"error":    err,
+		}).Error("Failed to publish match found events")
+		// Continue anyway - lobby is formed
+	}
 	
 	return lobby, nil
 }
@@ -262,6 +275,51 @@ func (lm *lobbyManager) startMatch(ctx context.Context, lobby *Lobby) error {
 		"lobby_id": lobby.ID,
 		"league":   lobby.League,
 	}).Info("Match started from lobby")
+	
+	return nil
+}
+
+// publishMatchFoundEvents publishes match_found events to all players in the lobby
+func (lm *lobbyManager) publishMatchFoundEvents(ctx context.Context, lobby *Lobby) error {
+	// Calculate total buyin amount for prize pool
+	totalBuyin := decimal.Zero
+	for _, player := range lobby.Players {
+		totalBuyin = totalBuyin.Add(LeagueBuyins[lobby.League])
+	}
+	
+	// Calculate prize pool (after 8% rake)
+	rakeAmount := totalBuyin.Mul(decimal.NewFromFloat(0.08)).Truncate(2)
+	prizePool := totalBuyin.Sub(rakeAmount)
+	
+	// Create match found event
+	matchFoundEvent := &events.MatchFoundEvent{
+		MatchID:         lobby.ID, // Using lobby ID as match ID for now
+		League:          lobby.League,
+		PlayerCount:     len(lobby.Players),
+		BuyinAmount:     LeagueBuyins[lobby.League],
+		PrizePool:       prizePool,
+		CountdownStart:  time.Now().Add(5 * time.Second), // 5 seconds from now
+	}
+	
+	// Publish to each player's personal channel
+	for _, player := range lobby.Players {
+		err := lm.publisher.PublishToUser(ctx, player.UserID, events.EventMatchFound, matchFoundEvent)
+		if err != nil {
+			lm.logger.WithFields(logrus.Fields{
+				"lobby_id": lobby.ID,
+				"user_id":  player.UserID,
+				"error":    err,
+			}).Error("Failed to publish match found event to player")
+			// Continue with other players
+		}
+	}
+	
+	lm.logger.WithFields(logrus.Fields{
+		"lobby_id":     lobby.ID,
+		"league":       lobby.League,
+		"player_count": len(lobby.Players),
+		"prize_pool":   prizePool,
+	}).Info("Published match found events to all players")
 	
 	return nil
 }

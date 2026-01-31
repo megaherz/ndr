@@ -6,7 +6,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
+
+	"backend/internal/modules/gateway"
+	"backend/internal/modules/gateway/events"
 )
 
 // HeatManager manages the lifecycle of heats within a match
@@ -42,6 +46,7 @@ type HeatLifecycleEvent struct {
 // heatManager implements HeatManager
 type heatManager struct {
 	stateManager MatchStateManager
+	publisher    gateway.CentrifugoPublisher
 	logger       *logrus.Logger
 	
 	// Heat configuration
@@ -51,9 +56,10 @@ type heatManager struct {
 }
 
 // NewHeatManager creates a new heat manager
-func NewHeatManager(stateManager MatchStateManager, logger *logrus.Logger) HeatManager {
+func NewHeatManager(stateManager MatchStateManager, publisher gateway.CentrifugoPublisher, logger *logrus.Logger) HeatManager {
 	return &heatManager{
 		stateManager:         stateManager,
+		publisher:           publisher,
 		logger:              logger,
 		countdownDuration:   3 * time.Second,
 		heatDuration:       25 * time.Second,
@@ -78,8 +84,16 @@ func (h *heatManager) StartHeatCountdown(ctx context.Context, matchID uuid.UUID,
 		"heat":     heat,
 	}).Info("Heat countdown started")
 	
-	// TODO: Publish heat_started event to match:{match_id} channel
-	// This would be handled by the gateway publisher
+	// Publish heat_started event to match:{match_id} channel (T060)
+	err = h.publishHeatStartedEvent(ctx, matchID, heat)
+	if err != nil {
+		h.logger.WithFields(logrus.Fields{
+			"match_id": matchID,
+			"heat":     heat,
+			"error":    err,
+		}).Error("Failed to publish heat started event")
+		// Continue anyway - heat is started
+	}
 	
 	// Schedule transition to active after countdown
 	go func() {
@@ -150,8 +164,16 @@ func (h *heatManager) EndHeat(ctx context.Context, matchID uuid.UUID) error {
 		"heat":     state.CurrentHeat,
 	}).Info("Heat ended")
 	
-	// TODO: Publish heat_ended event to match:{match_id} channel
-	// This would include final standings and scores
+	// Publish heat_ended event to match:{match_id} channel (T061)
+	err = h.publishHeatEndedEvent(ctx, matchID, state.CurrentHeat)
+	if err != nil {
+		h.logger.WithFields(logrus.Fields{
+			"match_id": matchID,
+			"heat":     state.CurrentHeat,
+			"error":    err,
+		}).Error("Failed to publish heat ended event")
+		// Continue anyway - heat is ended
+	}
 	
 	// If this was Heat 3, the match is complete
 	if state.CurrentHeat == 3 {
@@ -272,6 +294,7 @@ func (h *heatManager) GetHeatTimeRemaining(ctx context.Context, matchID uuid.UUI
 }
 
 // CheckEarlyHeatEnd checks if all alive players have locked scores (early end optimization)
+// This implements T053 - early heat end when all players have finished
 func (h *heatManager) CheckEarlyHeatEnd(ctx context.Context, matchID uuid.UUID) error {
 	state, err := h.stateManager.GetMatchState(ctx, matchID)
 	if err != nil {
@@ -301,4 +324,195 @@ func (h *heatManager) CheckEarlyHeatEnd(ctx context.Context, matchID uuid.UUID) 
 	}
 	
 	return nil
+}
+
+// publishHeatStartedEvent publishes heat_started event to match channel
+func (h *heatManager) publishHeatStartedEvent(ctx context.Context, matchID uuid.UUID, heat int) error {
+	// Get match state for participants
+	state, err := h.stateManager.GetMatchState(ctx, matchID)
+	if err != nil {
+		return fmt.Errorf("failed to get match state: %w", err)
+	}
+	
+	// Build participant info
+	participants := make([]events.ParticipantInfo, 0, len(state.Players))
+	position := 1
+	for _, player := range state.Players {
+		participantInfo := events.ParticipantInfo{
+			UserID:      player.UserID,
+			DisplayName: player.DisplayName,
+			IsGhost:     player.IsGhost,
+			Position:    position,
+		}
+		participants = append(participants, participantInfo)
+		position++
+	}
+	
+	// Calculate target line for Heat 2 and 3
+	var targetLine *decimal.Decimal
+	if heat == 2 {
+		// Target line is Heat 1 winner's score
+		targetLine = h.calculateHeat1WinnerScore(state)
+	} else if heat == 3 {
+		// Target line is current leader's total score
+		targetLine = h.calculateCurrentLeaderTotal(state)
+	}
+	
+	// Create heat started event
+	heatStartedEvent := &events.HeatStartedEvent{
+		MatchID:      matchID,
+		Heat:         heat,
+		Duration:     25, // 25 seconds
+		StartTime:    time.Now(),
+		TargetLine:   targetLine,
+		Participants: participants,
+	}
+	
+	// Publish to match channel
+	err = h.publisher.PublishToMatch(ctx, matchID, events.EventHeatStarted, heatStartedEvent)
+	if err != nil {
+		return fmt.Errorf("failed to publish heat started event: %w", err)
+	}
+	
+	h.logger.WithFields(logrus.Fields{
+		"match_id":         matchID,
+		"heat":            heat,
+		"participant_count": len(participants),
+		"target_line":     targetLine,
+	}).Info("Published heat started event")
+	
+	return nil
+}
+
+// publishHeatEndedEvent publishes heat_ended event to match channel
+func (h *heatManager) publishHeatEndedEvent(ctx context.Context, matchID uuid.UUID, heat int) error {
+	// Get match state for results
+	state, err := h.stateManager.GetMatchState(ctx, matchID)
+	if err != nil {
+		return fmt.Errorf("failed to get match state: %w", err)
+	}
+	
+	// Build heat results
+	results := make([]events.HeatResult, 0, len(state.Players))
+	for _, player := range state.Players {
+		var score *decimal.Decimal
+		var crashed bool
+		
+		switch heat {
+		case 1:
+			score = player.Heat1Score
+		case 2:
+			score = player.Heat2Score
+		case 3:
+			score = player.Heat3Score
+		}
+		
+		if score == nil || score.IsZero() {
+			crashed = true
+		}
+		
+		result := events.HeatResult{
+			UserID:      player.UserID,
+			DisplayName: player.DisplayName,
+			IsGhost:     player.IsGhost,
+			Score:       score,
+			LockTime:    nil, // Could add lock time tracking
+			Crashed:     crashed,
+		}
+		results = append(results, result)
+	}
+	
+	// Build standings (sorted by total score)
+	standings := h.buildStandings(state)
+	
+	// Calculate actual duration
+	actualDuration := float64(h.countdownDuration.Seconds() + h.heatDuration.Seconds())
+	if state.HeatStartTime != nil && state.HeatEndTime != nil {
+		actualDuration = state.HeatEndTime.Sub(*state.HeatStartTime).Seconds()
+	}
+	
+	// Calculate final speed at heat end
+	finalSpeed := decimal.NewFromInt(500) // Max speed, could be more precise
+	
+	// Create heat ended event
+	heatEndedEvent := &events.HeatEndedEvent{
+		MatchID:        matchID,
+		Heat:           heat,
+		EndTime:        time.Now(),
+		ActualDuration: actualDuration,
+		FinalSpeed:     finalSpeed,
+		Results:        results,
+		Standings:      standings,
+	}
+	
+	// Publish to match channel
+	err = h.publisher.PublishToMatch(ctx, matchID, events.EventHeatEnded, heatEndedEvent)
+	if err != nil {
+		return fmt.Errorf("failed to publish heat ended event: %w", err)
+	}
+	
+	h.logger.WithFields(logrus.Fields{
+		"match_id":        matchID,
+		"heat":           heat,
+		"actual_duration": actualDuration,
+		"result_count":   len(results),
+	}).Info("Published heat ended event")
+	
+	return nil
+}
+
+// calculateHeat1WinnerScore calculates the Heat 1 winner's score for target line
+func (h *heatManager) calculateHeat1WinnerScore(state *InMemoryMatchState) *decimal.Decimal {
+	var bestScore decimal.Decimal
+	
+	for _, player := range state.Players {
+		if player.Heat1Score != nil && player.Heat1Score.GreaterThan(bestScore) {
+			bestScore = *player.Heat1Score
+		}
+	}
+	
+	if bestScore.IsZero() {
+		return nil
+	}
+	
+	return &bestScore
+}
+
+// calculateCurrentLeaderTotal calculates the current leader's total score
+func (h *heatManager) calculateCurrentLeaderTotal(state *InMemoryMatchState) *decimal.Decimal {
+	var bestTotal decimal.Decimal
+	
+	for _, player := range state.Players {
+		if player.TotalScore.GreaterThan(bestTotal) {
+			bestTotal = player.TotalScore
+		}
+	}
+	
+	if bestTotal.IsZero() {
+		return nil
+	}
+	
+	return &bestTotal
+}
+
+// buildStandings builds current standings for the heat ended event
+func (h *heatManager) buildStandings(state *InMemoryMatchState) []events.StandingEntry {
+	standings := make([]events.StandingEntry, 0, len(state.Players))
+	
+	for _, player := range state.Players {
+		standing := events.StandingEntry{
+			UserID:        player.UserID,
+			DisplayName:   player.DisplayName,
+			IsGhost:       player.IsGhost,
+			Position:      player.Position,
+			TotalScore:    player.TotalScore,
+			Heat1Score:    player.Heat1Score,
+			Heat2Score:    player.Heat2Score,
+			Heat3Score:    player.Heat3Score,
+			PositionDelta: 0, // Could calculate position change from previous heat
+		}
+		standings = append(standings, standing)
+	}
+	
+	return standings
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"backend/internal/modules/account"
+	"backend/internal/modules/gateway"
+	"backend/internal/modules/gateway/events"
 )
 
 // MatchmakerService handles matchmaking operations
@@ -60,6 +62,7 @@ var LeagueBuyins = map[string]decimal.Decimal{
 type matchmakerService struct {
 	queueOps       QueueOperations
 	accountService account.AccountService
+	publisher      gateway.CentrifugoPublisher
 	logger         *logrus.Logger
 }
 
@@ -67,11 +70,13 @@ type matchmakerService struct {
 func NewMatchmakerService(
 	queueOps QueueOperations,
 	accountService account.AccountService,
+	publisher gateway.CentrifugoPublisher,
 	logger *logrus.Logger,
 ) MatchmakerService {
 	return &matchmakerService{
 		queueOps:       queueOps,
 		accountService: accountService,
+		publisher:      publisher,
 		logger:         logger,
 	}
 }

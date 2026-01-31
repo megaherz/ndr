@@ -105,8 +105,8 @@
 - [x] T038 [US1] Implement MatchmakerService with JoinQueue() method in backend/internal/modules/matchmaker/service.go
 - [x] T039 [US1] Implement CancelQueue() method in backend/internal/modules/matchmaker/service.go
 - [x] T040 [US1] Implement lobby formation logic (10 players max, timeout from MATCHMAKING_TIMEOUT_SECONDS env var) in backend/internal/modules/matchmaker/lobby.go
-- [ ] T041 [US1] Implement RPC handler matchmaking.join in backend/internal/modules/gateway/rpc/matchmaking_handler.go
-- [ ] T042 [US1] Implement RPC handler matchmaking.cancel in backend/internal/modules/gateway/rpc/matchmaking_handler.go
+- [x] T041 [US1] Implement RPC handler matchmaking.join in backend/internal/modules/gateway/rpc/matchmaking_handler.go
+- [x] T042 [US1] Implement RPC handler matchmaking.cancel in backend/internal/modules/gateway/rpc/matchmaking_handler.go
 
 **Backend: Game Engine Module**
 
@@ -118,23 +118,23 @@
 - [x] T048 [US1] Implement GameEngineService with CreateMatch() method in backend/internal/modules/gameengine/service.go
 - [x] T049 [US1] Implement in-memory match state machine (FORMING → IN_PROGRESS → COMPLETED) in backend/internal/modules/gameengine/state.go
 - [x] T050 [US1] Implement heat lifecycle (countdown → active → intermission) in backend/internal/modules/gameengine/heat.go
-- [ ] T051 [US1] Implement EarnPoints (lock score) logic in backend/internal/modules/gameengine/earn_points.go
-- [ ] T052 [US1] Implement RPC handler match.earn_points in backend/internal/modules/gateway/rpc/match_handler.go
-- [ ] T053 [US1] Implement early heat end optimization (all players finished) in backend/internal/modules/gameengine/heat.go
-- [ ] T054 [US1] Implement settlement calculation (positions, prizes, BURN rewards) in backend/internal/modules/gameengine/settlement.go
-- [ ] T054b [US1] Implement tiebreaker logic (Heat 3 score → Heat 2 score → Heat 1 score for identical totals) in backend/internal/modules/gameengine/settlement.go
-- [ ] T055 [US1] Integrate settlement with ledger (apply prize/BURN entries) in backend/internal/modules/gameengine/settlement.go
+- [x] T051 [US1] Implement EarnPoints (lock score) logic in backend/internal/modules/gameengine/earn_points.go
+- [x] T052 [US1] Implement RPC handler match.earn_points in backend/internal/modules/gateway/rpc/match_handler.go
+- [x] T053 [US1] Implement early heat end optimization (all players finished) in backend/internal/modules/gameengine/heat.go
+- [x] T054 [US1] Implement settlement calculation (positions, prizes, BURN rewards) in backend/internal/modules/gameengine/settlement.go
+- [x] T054b [US1] Implement tiebreaker logic (Heat 3 score → Heat 2 score → Heat 1 score for identical totals) in backend/internal/modules/gameengine/settlement.go
+- [x] T055 [US1] Integrate settlement with ledger (apply prize/BURN entries) in backend/internal/modules/gameengine/settlement.go
 
 **Backend: Gateway Module (Events)**
 
 - [x] T056 [P] [US1] Create gateway module structure in backend/internal/modules/gateway/
 - [x] T057 [P] [US1] Implement Centrifugo publisher methods (PublishToUser, PublishToMatch) in backend/internal/modules/gateway/centrifugo.go
 - [x] T058 [P] [US1] Implement event schemas (match_found, heat_started, heat_ended, match_settled) in backend/internal/modules/gateway/events/
-- [ ] T059 [US1] Publish match_found event to user:{user_id} channel in backend/internal/modules/matchmaker/service.go
-- [ ] T060 [US1] Publish heat_started event to match:{match_id} channel in backend/internal/modules/gameengine/heat.go
-- [ ] T061 [US1] Publish heat_ended event to match:{match_id} channel in backend/internal/modules/gameengine/heat.go
-- [ ] T062 [US1] Publish match_settled event to match:{match_id} channel in backend/internal/modules/gameengine/settlement.go
-- [ ] T063 [US1] Publish balance_updated event to user:{user_id} channel after settlement in backend/internal/modules/account/service.go
+- [x] T059 [US1] Publish match_found event to user:{user_id} channel in backend/internal/modules/matchmaker/service.go
+- [x] T060 [US1] Publish heat_started event to match:{match_id} channel in backend/internal/modules/gameengine/heat.go
+- [x] T061 [US1] Publish heat_ended event to match:{match_id} channel in backend/internal/modules/gameengine/heat.go
+- [x] T062 [US1] Publish match_settled event to match:{match_id} channel in backend/internal/modules/gameengine/settlement.go
+- [x] T063 [US1] Publish balance_updated event to user:{user_id} channel after settlement in backend/internal/modules/account/service.go
 
 **Frontend: Auth & Garage**
 
