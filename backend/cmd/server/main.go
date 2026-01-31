@@ -15,6 +15,7 @@ import (
 
 	"github.com/megaherz/ndr/internal/config"
 	"github.com/megaherz/ndr/internal/metrics"
+	"github.com/megaherz/ndr/internal/services"
 )
 
 func main() {
@@ -36,8 +37,18 @@ func main() {
 	// Initialize metrics
 	metricsInstance := metrics.New()
 
-	// TODO: Initialize database connection and proper auth service
-	// For now, we'll create a temporary auth endpoint to test connectivity
+	// Initialize service container with all dependencies
+	container, err := services.NewContainer(cfg, logrus.StandardLogger())
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to initialize service container")
+	}
+
+	// Ensure graceful shutdown of services
+	defer func() {
+		if err := container.Close(); err != nil {
+			logrus.WithError(err).Error("Error closing service container")
+		}
+	}()
 
 	// Setup HTTP router
 	r := chi.NewRouter()
@@ -67,9 +78,21 @@ func main() {
 
 	// Health check endpoint
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		// Perform health checks on all services
+		if err := container.HealthCheck(ctx); err != nil {
+			logrus.WithError(err).Error("Health check failed")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte(`{"status":"unhealthy","service":"nitro-drag-royale","error":"` + err.Error() + `"}`))
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok","service":"nitro-drag-royale"}`))
+		w.Write([]byte(`{"status":"healthy","service":"nitro-drag-royale"}`))
 	})
 
 	// API routes
@@ -80,60 +103,44 @@ func main() {
 			w.Write([]byte(`{"message":"Nitro Drag Royale API v1","status":"ready"}`))
 		})
 		
-		// Temporary auth endpoint for testing
+		// Authentication routes
 		r.Post("/auth/telegram", func(w http.ResponseWriter, r *http.Request) {
-			// Log the request for debugging
-			logrus.Info("Received auth request")
+			// Read request body
+			var requestBody struct {
+				InitData string `json:"init_data"`
+			}
 			
-			// Read and parse request body
-			var requestBody map[string]interface{}
 			if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-				logrus.WithError(err).Error("Failed to decode request body")
+				logrus.WithError(err).Error("Failed to decode auth request body")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"Invalid request body"}`))
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"error":   "Invalid request body",
+					"success": false,
+				})
 				return
 			}
 			
-			logrus.WithField("request", requestBody).Info("Auth request body")
-			
-			// Extract user data from request if available
-			userID := "temp-user-id"
-			telegramID := int64(123456789)
-			username := "testuser"
-			firstName := "Test"
-			lastName := "User"
-			
-			if user, ok := requestBody["user"].(map[string]interface{}); ok {
-				if id, ok := user["id"].(float64); ok {
-					telegramID = int64(id)
-				}
-				if name, ok := user["username"].(string); ok && name != "" {
-					username = name
-				}
-				if name, ok := user["first_name"].(string); ok && name != "" {
-					firstName = name
-				}
-				if name, ok := user["last_name"].(string); ok && name != "" {
-					lastName = name
-				}
+			// Authenticate using the auth service
+			authResult, err := container.AuthService.Authenticate(r.Context(), requestBody.InitData)
+			if err != nil {
+				logrus.WithError(err).Error("Authentication failed")
+				w.WriteHeader(http.StatusUnauthorized)
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"error":   "Authentication failed",
+					"success": false,
+				})
+				return
 			}
 			
-			// Generate response with actual user data
+			// Return successful authentication response
 			response := map[string]interface{}{
 				"data": map[string]interface{}{
-					"user": map[string]interface{}{
-						"id":                    userID,
-						"telegram_id":           telegramID,
-						"telegram_username":     username,
-						"telegram_first_name":   firstName,
-						"telegram_last_name":    lastName,
-						"created_at":           time.Now().Format(time.RFC3339),
-						"updated_at":           time.Now().Format(time.RFC3339),
-					},
+					"user": authResult.User,
 					"tokens": map[string]interface{}{
-						"app_token":        "temp.jwt.token.for." + username,
-						"centrifugo_token": "temp.centrifugo.token.for." + username,
-						"expires_at":       time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+						"access_token":  authResult.AccessToken,
+						"refresh_token": authResult.RefreshToken,
+						"expires_in":    authResult.ExpiresIn,
+						"token_type":    authResult.TokenType,
 					},
 				},
 				"success":   true,
@@ -143,6 +150,18 @@ func main() {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(response)
+		})
+		
+		// Wallet endpoint
+		r.Get("/wallet", func(w http.ResponseWriter, r *http.Request) {
+			// TODO: Add JWT middleware to extract user ID from token
+			// For now, return a placeholder response
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"message": "Wallet endpoint - requires authentication middleware",
+				"success": false,
+			})
 		})
 	})
 
