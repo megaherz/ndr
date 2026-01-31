@@ -10,6 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
+	"backend/internal/constants"
 	"backend/internal/modules/account"
 	"backend/internal/modules/gateway"
 	"backend/internal/modules/gateway/events"
@@ -69,17 +70,17 @@ type PrizeDistribution struct {
 
 // League-specific BURN reward tables
 var burnRewardTables = map[string]map[int]decimal.Decimal{
-	"ROOKIE": {
+	constants.LeagueRookie: {
 		// Rookie league has no BURN rewards (FR-038)
 	},
-	"STREET": {
+	constants.LeagueStreet: {
 		1: decimal.NewFromInt(50),   // 1st place: 50 BURN
 		2: decimal.NewFromInt(30),   // 2nd place: 30 BURN
 		3: decimal.NewFromInt(20),   // 3rd place: 20 BURN
 		4: decimal.NewFromInt(10),   // 4th place: 10 BURN
 		5: decimal.NewFromInt(5),    // 5th place: 5 BURN
 	},
-	"PRO": {
+	constants.LeaguePro: {
 		1: decimal.NewFromInt(300),  // 1st place: 300 BURN
 		2: decimal.NewFromInt(200),  // 2nd place: 200 BURN
 		3: decimal.NewFromInt(150),  // 3rd place: 150 BURN
@@ -88,7 +89,7 @@ var burnRewardTables = map[string]map[int]decimal.Decimal{
 		6: decimal.NewFromInt(50),   // 6th place: 50 BURN
 		7: decimal.NewFromInt(25),   // 7th place: 25 BURN
 	},
-	"TOP_FUEL": {
+	constants.LeagueTopFuel: {
 		1: decimal.NewFromInt(3000), // 1st place: 3000 BURN
 		2: decimal.NewFromInt(2000), // 2nd place: 2000 BURN
 		3: decimal.NewFromInt(1500), // 3rd place: 1500 BURN
@@ -303,9 +304,9 @@ func (s *settlementService) ApplySettlement(ctx context.Context, matchID uuid.UU
 			entry := &models.LedgerEntry{
 				UserID:        position.UserID,
 				SystemWallet:  nil,
-				Currency:      "FUEL",
+				Currency:      constants.CurrencyFUEL,
 				Amount:        position.PrizeAmount,
-				OperationType: "MATCH_PRIZE",
+				OperationType: constants.OperationMatchPrize,
 				ReferenceID:   &matchID,
 				Description:   sql.NullString{String: fmt.Sprintf("Prize for position %d in %s league", position.FinalPosition, settlement.League), Valid: true},
 				CreatedAt:     settlement.SettledAt,
@@ -318,9 +319,9 @@ func (s *settlementService) ApplySettlement(ctx context.Context, matchID uuid.UU
 			entry := &models.LedgerEntry{
 				UserID:        position.UserID,
 				SystemWallet:  nil,
-				Currency:      "BURN",
+				Currency:      constants.CurrencyBURN,
 				Amount:        position.BurnReward,
-				OperationType: "MATCH_BURN_REWARD",
+				OperationType: constants.OperationMatchBurnReward,
 				ReferenceID:   &matchID,
 				Description:   sql.NullString{String: fmt.Sprintf("BURN reward for position %d in %s league", position.FinalPosition, settlement.League), Valid: true},
 				CreatedAt:     settlement.SettledAt,
@@ -333,10 +334,10 @@ func (s *settlementService) ApplySettlement(ctx context.Context, matchID uuid.UU
 	if settlement.RakeAmount.GreaterThan(decimal.Zero) {
 		entry := &models.LedgerEntry{
 			UserID:        nil,
-			SystemWallet:  sql.NullString{String: "RAKE_FUEL", Valid: true},
+			SystemWallet:  sql.NullString{String: constants.SystemWalletRakeFuel, Valid: true},
 			Currency:      "FUEL",
 			Amount:        settlement.RakeAmount,
-			OperationType: "MATCH_RAKE",
+			OperationType: constants.OperationMatchRake,
 			ReferenceID:   &matchID,
 			Description:   sql.NullString{String: fmt.Sprintf("8%% rake from %s league match", settlement.League), Valid: true},
 			CreatedAt:     settlement.SettledAt,
@@ -351,10 +352,10 @@ func (s *settlementService) ApplySettlement(ctx context.Context, matchID uuid.UU
 			if position.PrizeAmount.GreaterThan(decimal.Zero) {
 				entry := &models.LedgerEntry{
 					UserID:        nil,
-					SystemWallet:  sql.NullString{String: "HOUSE_FUEL", Valid: true},
-					Currency:      "FUEL",
+					SystemWallet:  sql.NullString{String: constants.SystemWalletHouseFuel, Valid: true},
+					Currency:      constants.CurrencyFUEL,
 					Amount:        position.PrizeAmount.Neg(),
-					OperationType: "MATCH_PRIZE",
+					OperationType: constants.OperationMatchPrize,
 					ReferenceID:   &matchID,
 					Description:   sql.NullString{String: fmt.Sprintf("Ghost prize payout for position %d", position.FinalPosition), Valid: true},
 					CreatedAt:     settlement.SettledAt,

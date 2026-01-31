@@ -10,6 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
+	"backend/internal/constants"
 	"backend/internal/storage/postgres/models"
 	"backend/internal/storage/postgres/repository"
 )
@@ -71,7 +72,7 @@ func (l *ledgerOperations) DebitFuel(ctx context.Context, userID uuid.UUID, amou
 	entry := &models.LedgerEntry{
 		UserID:        &userID,
 		SystemWallet:  sql.NullString{},
-		Currency:      "FUEL",
+		Currency:      constants.CurrencyFUEL,
 		Amount:        amount.Neg(), // Negative for debit
 		OperationType: operationType,
 		ReferenceID:   referenceID,
@@ -104,7 +105,7 @@ func (l *ledgerOperations) CreditFuel(ctx context.Context, userID uuid.UUID, amo
 	entry := &models.LedgerEntry{
 		UserID:        &userID,
 		SystemWallet:  sql.NullString{},
-		Currency:      "FUEL",
+		Currency:      constants.CurrencyFUEL,
 		Amount:        amount, // Positive for credit
 		OperationType: operationType,
 		ReferenceID:   referenceID,
@@ -137,7 +138,7 @@ func (l *ledgerOperations) CreditBurn(ctx context.Context, userID uuid.UUID, amo
 	entry := &models.LedgerEntry{
 		UserID:        &userID,
 		SystemWallet:  sql.NullString{},
-		Currency:      "BURN",
+		Currency:      constants.CurrencyBURN,
 		Amount:        amount, // Positive for credit
 		OperationType: operationType,
 		ReferenceID:   referenceID,
@@ -170,7 +171,7 @@ func (l *ledgerOperations) DebitSystemWallet(ctx context.Context, walletName str
 	entry := &models.LedgerEntry{
 		UserID:        nil,
 		SystemWallet:  sql.NullString{String: walletName, Valid: true},
-		Currency:      "FUEL",
+		Currency:      constants.CurrencyFUEL,
 		Amount:        amount.Neg(), // Negative for debit
 		OperationType: operationType,
 		ReferenceID:   referenceID,
@@ -203,7 +204,7 @@ func (l *ledgerOperations) CreditSystemWallet(ctx context.Context, walletName st
 	entry := &models.LedgerEntry{
 		UserID:        nil,
 		SystemWallet:  sql.NullString{String: walletName, Valid: true},
-		Currency:      "FUEL",
+		Currency:      constants.CurrencyFUEL,
 		Amount:        amount, // Positive for credit
 		OperationType: operationType,
 		ReferenceID:   referenceID,
@@ -309,7 +310,7 @@ func (l *ledgerOperations) TransferFuel(ctx context.Context, fromUserID, toUserI
 	debitEntry := &models.LedgerEntry{
 		UserID:        &fromUserID,
 		SystemWallet:  sql.NullString{},
-		Currency:      "FUEL",
+		Currency:      constants.CurrencyFUEL,
 		Amount:        amount.Neg(), // Negative for debit
 		OperationType: operationType,
 		ReferenceID:   referenceID,
@@ -321,7 +322,7 @@ func (l *ledgerOperations) TransferFuel(ctx context.Context, fromUserID, toUserI
 	creditEntry := &models.LedgerEntry{
 		UserID:        &toUserID,
 		SystemWallet:  sql.NullString{},
-		Currency:      "FUEL",
+		Currency:      constants.CurrencyFUEL,
 		Amount:        amount, // Positive for credit
 		OperationType: operationType,
 		ReferenceID:   referenceID,
@@ -381,11 +382,11 @@ func (l *ledgerOperations) updateWalletBalance(ctx context.Context, userID uuid.
 	var tonDelta, fuelDelta, burnDelta decimal.Decimal
 	
 	switch currency {
-	case "TON":
+	case constants.CurrencyTON:
 		tonDelta = delta
-	case "FUEL":
+	case constants.CurrencyFUEL:
 		fuelDelta = delta
-	case "BURN":
+	case constants.CurrencyBURN:
 		burnDelta = delta
 	default:
 		return fmt.Errorf("unsupported currency: %s", currency)

@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
+	"backend/internal/constants"
 	"backend/internal/modules/matchmaker"
 )
 
@@ -79,13 +80,7 @@ func (h *MatchmakingHandler) HandleJoinMatchmaking(ctx context.Context, data []b
 	}
 	
 	// Validate league
-	validLeagues := map[string]bool{
-		"ROOKIE":   true,
-		"STREET":   true,
-		"PRO":      true,
-		"TOP_FUEL": true,
-	}
-	if !validLeagues[req.League] {
+	if !constants.IsValidLeague(req.League) {
 		return h.errorResponse("Invalid league")
 	}
 	

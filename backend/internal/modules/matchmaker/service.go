@@ -9,6 +9,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
+	"backend/internal/constants"
 	"backend/internal/modules/account"
 	"backend/internal/modules/gateway"
 	"backend/internal/modules/gateway/events"
@@ -50,13 +51,8 @@ type QueueInfo struct {
 	AvgWaitTime  int    `json:"avg_wait_time"`  // Average wait time in seconds
 }
 
-// League buy-in amounts
-var LeagueBuyins = map[string]decimal.Decimal{
-	"ROOKIE":   decimal.NewFromInt(10),   // 10 FUEL
-	"STREET":   decimal.NewFromInt(50),   // 50 FUEL
-	"PRO":      decimal.NewFromInt(300),  // 300 FUEL
-	"TOP_FUEL": decimal.NewFromInt(3000), // 3000 FUEL
-}
+// Use league constants from constants package
+var LeagueBuyins = constants.LeagueBuyins
 
 // matchmakerService implements MatchmakerService
 type matchmakerService struct {
@@ -104,7 +100,7 @@ func (s *matchmakerService) JoinQueue(ctx context.Context, userID uuid.UUID, dis
 	}
 	
 	// Check if user has sufficient balance
-	hasSufficientBalance, err := s.accountService.HasSufficientBalance(ctx, userID, "FUEL", buyinAmount)
+	hasSufficientBalance, err := s.accountService.HasSufficientBalance(ctx, userID, constants.CurrencyFUEL, buyinAmount)
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"user_id": userID,

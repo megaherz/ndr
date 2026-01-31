@@ -8,6 +8,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
+	"backend/internal/constants"
 	"backend/internal/storage/postgres/models"
 	"backend/internal/storage/postgres/repository"
 )
@@ -56,12 +57,12 @@ type LeagueStatus struct {
 	Reason     string          `json:"reason,omitempty"` // Why not accessible
 }
 
-// League buy-in costs (constants)
+// Use league constants from constants package
 var (
-	RookieBuyin  = decimal.NewFromInt(10)   // 10 FUEL
-	StreetBuyin  = decimal.NewFromInt(50)   // 50 FUEL
-	ProBuyin     = decimal.NewFromInt(300)  // 300 FUEL
-	TopFuelBuyin = decimal.NewFromInt(3000) // 3000 FUEL
+	RookieBuyin  = constants.LeagueBuyins[constants.LeagueRookie]
+	StreetBuyin  = constants.LeagueBuyins[constants.LeagueStreet]
+	ProBuyin     = constants.LeagueBuyins[constants.LeaguePro]
+	TopFuelBuyin = constants.LeagueBuyins[constants.LeagueTopFuel]
 )
 
 // accountService implements AccountService

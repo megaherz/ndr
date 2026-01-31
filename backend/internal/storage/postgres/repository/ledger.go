@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/shopspring/decimal"
 
+	"backend/internal/constants"
 	"backend/internal/storage/postgres/models"
 )
 
@@ -140,9 +141,9 @@ func (r *ledgerRepository) GetSystemWalletBalance(ctx context.Context, walletNam
 	query := `
 		SELECT COALESCE(SUM(amount), 0)::text
 		FROM ledger_entries 
-		WHERE system_wallet = $1 AND currency = 'FUEL'`
+		WHERE system_wallet = $1 AND currency = $2`
 	
-	err := r.db.GetContext(ctx, &balance, query, walletName)
+	err := r.db.GetContext(ctx, &balance, query, walletName, constants.CurrencyFUEL)
 	if err != nil {
 		return decimal.Zero, err
 	}
