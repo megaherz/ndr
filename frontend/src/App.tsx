@@ -121,7 +121,7 @@ function App() {
     }
 
     initializeApp()
-  }, []) // Only run once on mount
+  }, [isAuthenticated, isTokenExpired, logout, setError, setLoading, setTokens, setUser]) // Include all dependencies
 
   // Show loading screen during initialization
   if (isInitializing) {

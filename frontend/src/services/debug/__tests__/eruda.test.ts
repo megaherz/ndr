@@ -36,8 +36,8 @@ describe('ErudaService', () => {
     localStorage.clear()
     
     // Reset window.Telegram
-    delete (window as any).Telegram
-    delete (window as any).eruda
+    delete (window as unknown as { Telegram?: unknown }).Telegram
+    delete (window as unknown as { eruda?: unknown }).eruda
     
     // Reset URL
     Object.defineProperty(window, 'location', {
@@ -102,7 +102,7 @@ describe('ErudaService', () => {
       vi.stubEnv('DEV', false)
       
       // Mock Telegram environment
-      ;(window as any).Telegram = { WebApp: mockTelegramWebApp }
+      ;(window as unknown as { Telegram: { WebApp: typeof mockTelegramWebApp } }).Telegram = { WebApp: mockTelegramWebApp }
       
       // Mock dev hostname
       Object.defineProperty(window, 'location', {
@@ -167,12 +167,13 @@ describe('ErudaService', () => {
 
   describe('global NDR_DEBUG object', () => {
     it('should expose debug functions globally', () => {
-      expect((window as any).NDR_DEBUG).toBeDefined()
-      expect(typeof (window as any).NDR_DEBUG.show).toBe('function')
-      expect(typeof (window as any).NDR_DEBUG.hide).toBe('function')
-      expect(typeof (window as any).NDR_DEBUG.enable).toBe('function')
-      expect(typeof (window as any).NDR_DEBUG.disable).toBe('function')
-      expect(typeof (window as any).NDR_DEBUG.info).toBe('function')
+      const ndrDebug = (window as unknown as { NDR_DEBUG?: Record<string, () => void> }).NDR_DEBUG
+      expect(ndrDebug).toBeDefined()
+      expect(typeof ndrDebug?.show).toBe('function')
+      expect(typeof ndrDebug?.hide).toBe('function')
+      expect(typeof ndrDebug?.enable).toBe('function')
+      expect(typeof ndrDebug?.disable).toBe('function')
+      expect(typeof ndrDebug?.info).toBe('function')
     })
   })
 
@@ -183,7 +184,7 @@ describe('ErudaService', () => {
       const consoleGroupEndSpy = vi.spyOn(console, 'groupEnd').mockImplementation(() => {})
       
       // Mock Telegram WebApp
-      ;(window as any).Telegram = { WebApp: mockTelegramWebApp }
+      ;(window as unknown as { Telegram: { WebApp: typeof mockTelegramWebApp } }).Telegram = { WebApp: mockTelegramWebApp }
       
       erudaService.logAppInfo()
       

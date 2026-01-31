@@ -15,8 +15,9 @@ export {
 export const debugUtils = {
   // Quick console access
   console: () => {
-    if ((window as any).NDR_DEBUG) {
-      (window as any).NDR_DEBUG.show()
+    const ndrDebug = (window as unknown as { NDR_DEBUG?: { show: () => void } }).NDR_DEBUG
+    if (ndrDebug) {
+      ndrDebug.show()
     } else {
       console.log('Debug console not available. Try adding ?debug=true to URL')
     }
@@ -46,7 +47,16 @@ export const debugUtils = {
 
   // Log Telegram WebApp state
   telegram: () => {
-    const webApp = (window as any).Telegram?.WebApp
+    const telegram = (window as unknown as { Telegram?: { WebApp: unknown } }).Telegram
+    const webApp = telegram?.WebApp as {
+      version?: string
+      platform?: string
+      colorScheme?: string
+      viewportHeight?: number
+      initDataUnsafe?: { user?: unknown }
+      initData?: string
+    } | undefined
+    
     if (webApp) {
       console.group('📱 Telegram WebApp')
       console.log('Version:', webApp.version)
@@ -151,7 +161,7 @@ export const debugUtils = {
 
 // Make debug utils globally available in development
 if (import.meta.env.DEV && typeof window !== 'undefined') {
-  (window as any).debugUtils = debugUtils
+  (window as unknown as { debugUtils: typeof debugUtils }).debugUtils = debugUtils
   
   // Log helpful message
   console.log(

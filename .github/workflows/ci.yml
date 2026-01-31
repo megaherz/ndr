@@ -25,6 +25,12 @@ jobs:
         working-directory: ./backend
         run: go mod download
 
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: ./backend
+
       - name: Run tests
         working-directory: ./backend
         run: make test
@@ -32,15 +38,6 @@ jobs:
       - name: Build
         working-directory: ./backend
         run: make build
-
-      - name: Run linter
-        working-directory: ./backend
-        run: |
-          if command -v golangci-lint &> /dev/null; then
-            make lint
-          else
-            echo "golangci-lint not installed, skipping lint step"
-          fi
 
   frontend:
     name: Frontend Build & Test

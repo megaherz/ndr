@@ -9,8 +9,8 @@ interface ErudaInstance {
   show: () => void
   hide: () => void
   destroy: () => void
-  get: (name: string) => any
-  add: (plugin: any) => void
+  get: (name: string) => unknown
+  add: (plugin: unknown) => void
   remove: (name: string) => void
   position: (config: { x: number; y: number }) => void
   scale: (scale: number) => void
@@ -280,7 +280,7 @@ export const logAppInfo = () => erudaService.logAppInfo()
 
 // Make debug functions globally available for easy access in production
 if (typeof window !== 'undefined') {
-  (window as any).NDR_DEBUG = {
+  (window as unknown as { NDR_DEBUG: Record<string, () => void> }).NDR_DEBUG = {
     show: showDebugConsole,
     hide: hideDebugConsole,
     enable: enableDebugMode,
