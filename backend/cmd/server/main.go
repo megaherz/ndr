@@ -12,8 +12,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
 
-	"ndr/internal/config"
-	"ndr/internal/metrics"
+	"github.com/megaherz/ndr/internal/config"
+	"github.com/megaherz/ndr/internal/metrics"
 )
 
 func main() {

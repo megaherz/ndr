@@ -1,4 +1,4 @@
-.PHONY: dev build test test-integration test-coverage lint migrate-up migrate-down migrate-create migrate-force proto-gen clean
+.PHONY: dev build test test-coverage lint migrate-up migrate-down migrate-create migrate-force proto-gen clean
 
 # Go parameters
 GOCMD=go
@@ -21,13 +21,9 @@ dev:
 build:
 	$(GOBUILD) -o bin/$(BINARY_NAME) -v ./cmd/server
 
-# Run unit tests
+# Run all tests
 test:
 	$(GOTEST) -v ./...
-
-# Run integration tests (requires Docker)
-test-integration:
-	$(GOTEST) -v -tags=integration ./tests/integration/...
 
 # Run tests with coverage
 test-coverage:

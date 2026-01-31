@@ -57,6 +57,24 @@ func (c *Client) PublishToMatch(ctx context.Context, matchID string, event strin
 	return c.publish(ctx, channel, event, data)
 }
 
+// Publish publishes raw data to a channel (for direct JSON publishing)
+func (c *Client) Publish(ctx context.Context, channel string, data []byte) error {
+	_, err := c.client.Publish(ctx, channel, data)
+	if err != nil {
+		c.logger.WithFields(logrus.Fields{
+			"channel": channel,
+			"error":   err,
+		}).Error("Failed to publish raw data to Centrifugo")
+		return fmt.Errorf("failed to publish to channel %s: %w", channel, err)
+	}
+
+	c.logger.WithFields(logrus.Fields{
+		"channel": channel,
+	}).Debug("Published raw data to Centrifugo")
+
+	return nil
+}
+
 // publish is the internal method for publishing messages
 func (c *Client) publish(ctx context.Context, channel string, event string, data interface{}) error {
 	// Create the event payload
