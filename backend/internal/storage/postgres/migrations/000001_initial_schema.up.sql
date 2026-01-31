@@ -32,6 +32,7 @@ CREATE TABLE users (
     telegram_username VARCHAR(255),
     telegram_first_name VARCHAR(255) NOT NULL,
     telegram_last_name VARCHAR(255),
+    telegram_photo_url VARCHAR(500),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

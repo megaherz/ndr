@@ -27,6 +27,7 @@ type TelegramUser struct {
 	Username  string `json:"username,omitempty"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name,omitempty"`
+	PhotoURL  string `json:"photo_url,omitempty"`
 }
 
 // TelegramInitData represents the parsed Telegram Web App initData

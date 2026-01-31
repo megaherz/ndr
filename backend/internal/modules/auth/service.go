@@ -88,6 +88,7 @@ func (s *authService) Authenticate(ctx context.Context, initData string) (*AuthR
 		telegramData.User.Username,
 		telegramData.User.FirstName,
 		telegramData.User.LastName,
+		telegramData.User.PhotoURL,
 	)
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{

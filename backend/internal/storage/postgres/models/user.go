@@ -13,6 +13,7 @@ type User struct {
 	TelegramUsername  *string   `db:"telegram_username" json:"telegram_username,omitempty"`
 	TelegramFirstName string    `db:"telegram_first_name" json:"telegram_first_name"`
 	TelegramLastName  *string   `db:"telegram_last_name" json:"telegram_last_name,omitempty"`
+	TelegramPhotoURL  *string   `db:"telegram_photo_url" json:"telegram_photo_url,omitempty"`
 	CreatedAt         time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt         time.Time `db:"updated_at" json:"updated_at"`
 }

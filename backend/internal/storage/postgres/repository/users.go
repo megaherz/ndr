@@ -23,10 +23,10 @@ type UserRepository interface {
 	GetByTelegramID(ctx context.Context, telegramID int64) (*models.User, error)
 	
 	// UpdateTelegramInfo updates user's Telegram information
-	UpdateTelegramInfo(ctx context.Context, userID uuid.UUID, username, firstName, lastName string) error
+	UpdateTelegramInfo(ctx context.Context, userID uuid.UUID, username, firstName, lastName, photoURL string) error
 	
 	// GetOrCreateByTelegramID gets an existing user or creates a new one
-	GetOrCreateByTelegramID(ctx context.Context, telegramID int64, username, firstName, lastName string) (*models.User, error)
+	GetOrCreateByTelegramID(ctx context.Context, telegramID int64, username, firstName, lastName, photoURL string) (*models.User, error)
 	
 	// List retrieves users with pagination
 	List(ctx context.Context, limit, offset int) ([]*models.User, error)
@@ -49,9 +49,9 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 func (r *userRepository) Create(ctx context.Context, user *models.User) error {
 	query := `
 		INSERT INTO users (id, telegram_id, telegram_username, telegram_first_name, 
-		                  telegram_last_name, created_at, updated_at)
+		                  telegram_last_name, telegram_photo_url, created_at, updated_at)
 		VALUES (:id, :telegram_id, :telegram_username, :telegram_first_name, 
-		        :telegram_last_name, :created_at, :updated_at)`
+		        :telegram_last_name, :telegram_photo_url, :created_at, :updated_at)`
 	
 	_, err := r.db.NamedExecContext(ctx, query, user)
 	return err
@@ -62,7 +62,7 @@ func (r *userRepository) GetByID(ctx context.Context, userID uuid.UUID) (*models
 	user := &models.User{}
 	query := `
 		SELECT id, telegram_id, telegram_username, telegram_first_name, 
-		       telegram_last_name, created_at, updated_at
+		       telegram_last_name, telegram_photo_url, created_at, updated_at
 		FROM users 
 		WHERE id = $1`
 	
@@ -82,7 +82,7 @@ func (r *userRepository) GetByTelegramID(ctx context.Context, telegramID int64) 
 	user := &models.User{}
 	query := `
 		SELECT id, telegram_id, telegram_username, telegram_first_name, 
-		       telegram_last_name, created_at, updated_at
+		       telegram_last_name, telegram_photo_url, created_at, updated_at
 		FROM users 
 		WHERE telegram_id = $1`
 	
@@ -98,24 +98,26 @@ func (r *userRepository) GetByTelegramID(ctx context.Context, telegramID int64) 
 }
 
 // UpdateTelegramInfo updates user's Telegram information
-func (r *userRepository) UpdateTelegramInfo(ctx context.Context, userID uuid.UUID, username, firstName, lastName string) error {
+func (r *userRepository) UpdateTelegramInfo(ctx context.Context, userID uuid.UUID, username, firstName, lastName, photoURL string) error {
 	query := `
 		UPDATE users 
 		SET telegram_username = $2, 
 		    telegram_first_name = $3, 
 		    telegram_last_name = $4,
+		    telegram_photo_url = $5,
 		    updated_at = NOW()
 		WHERE id = $1`
 	
 	_, err := r.db.ExecContext(ctx, query, userID, 
 		sql.NullString{String: username, Valid: username != ""},
 		firstName,
-		sql.NullString{String: lastName, Valid: lastName != ""})
+		sql.NullString{String: lastName, Valid: lastName != ""},
+		sql.NullString{String: photoURL, Valid: photoURL != ""})
 	return err
 }
 
 // GetOrCreateByTelegramID gets an existing user or creates a new one
-func (r *userRepository) GetOrCreateByTelegramID(ctx context.Context, telegramID int64, username, firstName, lastName string) (*models.User, error) {
+func (r *userRepository) GetOrCreateByTelegramID(ctx context.Context, telegramID int64, username, firstName, lastName, photoURL string) (*models.User, error) {
 	// First, try to get existing user
 	existingUser, err := r.GetByTelegramID(ctx, telegramID)
 	if err != nil {
@@ -124,7 +126,7 @@ func (r *userRepository) GetOrCreateByTelegramID(ctx context.Context, telegramID
 	
 	if existingUser != nil {
 		// Update Telegram info in case it changed
-		err = r.UpdateTelegramInfo(ctx, existingUser.ID, username, firstName, lastName)
+		err = r.UpdateTelegramInfo(ctx, existingUser.ID, username, firstName, lastName, photoURL)
 		if err != nil {
 			return nil, err
 		}
@@ -134,12 +136,15 @@ func (r *userRepository) GetOrCreateByTelegramID(ctx context.Context, telegramID
 	}
 	
 	// User doesn't exist, create new one
-	var usernamePtr, lastNamePtr *string
+	var usernamePtr, lastNamePtr, photoURLPtr *string
 	if username != "" {
 		usernamePtr = &username
 	}
 	if lastName != "" {
 		lastNamePtr = &lastName
+	}
+	if photoURL != "" {
+		photoURLPtr = &photoURL
 	}
 	
 	newUser := &models.User{
@@ -148,6 +153,7 @@ func (r *userRepository) GetOrCreateByTelegramID(ctx context.Context, telegramID
 		TelegramUsername:  usernamePtr,
 		TelegramFirstName: firstName,
 		TelegramLastName:  lastNamePtr,
+		TelegramPhotoURL:  photoURLPtr,
 		CreatedAt:         time.Now(),
 		UpdatedAt:         time.Now(),
 	}
@@ -165,7 +171,7 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*models
 	users := []*models.User{}
 	query := `
 		SELECT id, telegram_id, telegram_username, telegram_first_name, 
-		       telegram_last_name, created_at, updated_at
+		       telegram_last_name, telegram_photo_url, created_at, updated_at
 		FROM users 
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2`
