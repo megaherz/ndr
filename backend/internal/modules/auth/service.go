@@ -10,9 +10,9 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 
-	"backend/internal/auth"
-	"backend/internal/storage/postgres/models"
-	"backend/internal/storage/postgres/repository"
+	"ndr/internal/auth"
+	"ndr/internal/storage/postgres/models"
+	"ndr/internal/storage/postgres/repository"
 )
 
 // AuthService handles authentication operations

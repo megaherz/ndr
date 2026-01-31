@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -55,18 +56,17 @@ func ValidateTelegramInitData(initData, botToken string) (*TelegramInitData, err
 		return nil, ErrInvalidHash
 	}
 
-	// Remove hash from values for validation
-	values.Del("hash")
-
-	// Create data check string
-	var pairs []string
-	for key, vals := range values {
-		if len(vals) > 0 {
-			pairs = append(pairs, fmt.Sprintf("%s=%s", key, vals[0]))
+	// Create data check string using original encoded values
+	// We need to reconstruct from the original initData string to preserve encoding
+	pairs := strings.Split(initData, "&")
+	var dataPairs []string
+	for _, pair := range pairs {
+		if !strings.HasPrefix(pair, "hash=") {
+			dataPairs = append(dataPairs, pair)
 		}
 	}
-	sort.Strings(pairs)
-	dataCheckString := strings.Join(pairs, "\n")
+	sort.Strings(dataPairs)
+	dataCheckString := strings.Join(dataPairs, "\n")
 
 	// Create secret key
 	secretKey := hmac.New(sha256.New, []byte("WebAppData"))
