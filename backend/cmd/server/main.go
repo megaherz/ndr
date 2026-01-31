@@ -86,13 +86,13 @@ func main() {
 			logrus.WithError(err).Error("Health check failed")
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(`{"status":"unhealthy","service":"nitro-drag-royale","error":"` + err.Error() + `"}`))
+			_, _ = w.Write([]byte(`{"status":"unhealthy","service":"nitro-drag-royale","error":"` + err.Error() + `"}`))
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"healthy","service":"nitro-drag-royale"}`))
+		_, _ = w.Write([]byte(`{"status":"healthy","service":"nitro-drag-royale"}`))
 	})
 
 	// API routes
@@ -100,7 +100,7 @@ func main() {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"message":"Nitro Drag Royale API v1","status":"ready"}`))
+			_, _ = w.Write([]byte(`{"message":"Nitro Drag Royale API v1","status":"ready"}`))
 		})
 		
 		// Authentication routes
@@ -113,7 +113,7 @@ func main() {
 			if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 				logrus.WithError(err).Error("Failed to decode auth request body")
 				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]interface{}{
+				_ = json.NewEncoder(w).Encode(map[string]interface{}{
 					"error":   "Invalid request body",
 					"success": false,
 				})
@@ -125,7 +125,7 @@ func main() {
 			if err != nil {
 				logrus.WithError(err).Error("Authentication failed")
 				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(map[string]interface{}{
+				_ = json.NewEncoder(w).Encode(map[string]interface{}{
 					"error":   "Authentication failed",
 					"success": false,
 				})
@@ -149,7 +149,7 @@ func main() {
 			
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		})
 		
 		// Wallet endpoint
@@ -158,7 +158,7 @@ func main() {
 			// For now, return a placeholder response
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"message": "Wallet endpoint - requires authentication middleware",
 				"success": false,
 			})
