@@ -189,7 +189,7 @@ func (s *settlementService) SettleMatch(ctx context.Context, matchID uuid.UUID) 
 	}
 	
 	// Update match status to completed
-	err = s.matchRepo.UpdateStatus(ctx, matchID, "COMPLETED")
+	err = s.matchRepo.UpdateStatus(ctx, matchID, string(models.MatchStatusCompleted))
 	if err != nil {
 		return nil, fmt.Errorf("failed to update match status: %w", err)
 	}
@@ -363,7 +363,7 @@ func (s *settlementService) ApplySettlement(ctx context.Context, matchID uuid.UU
 				wallet := constants.SystemWalletRakeFuel
 				return &wallet
 			}(),
-			Currency:      "FUEL",
+			Currency:      constants.CurrencyFUEL,
 			Amount:        settlement.RakeAmount,
 			OperationType: constants.OperationMatchRake,
 			ReferenceID:   &matchID,

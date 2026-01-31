@@ -137,7 +137,7 @@ func (s *gameEngineService) CreateMatch(ctx context.Context, league string, play
 	match := &models.Match{
 		ID:                matchID,
 		League:            models.League(league),
-		Status:            "FORMING",
+		Status:            models.MatchStatusForming,
 		LivePlayerCount:   livePlayerCount,
 		GhostPlayerCount:  ghostPlayerCount,
 		PrizePool:         prizePool,
@@ -221,7 +221,7 @@ func (s *gameEngineService) GetMatch(ctx context.Context, matchID uuid.UUID) (*m
 // StartMatch starts a match (transitions from FORMING to IN_PROGRESS)
 func (s *gameEngineService) StartMatch(ctx context.Context, matchID uuid.UUID) error {
 	// Update match status
-	err := s.matchRepo.UpdateStatus(ctx, matchID, "IN_PROGRESS")
+	err := s.matchRepo.UpdateStatus(ctx, matchID, string(models.MatchStatusInProgress))
 	if err != nil {
 		return fmt.Errorf("failed to update match status: %w", err)
 	}
@@ -250,7 +250,7 @@ func (s *gameEngineService) EarnPoints(ctx context.Context, matchID, userID uuid
 		return err
 	}
 	
-	if match.Status != "IN_PROGRESS" {
+	if match.Status != models.MatchStatusInProgress {
 		return fmt.Errorf("match is not in progress")
 	}
 	
@@ -346,7 +346,7 @@ func (s *gameEngineService) GetMatchState(ctx context.Context, matchID uuid.UUID
 // CompleteMatch completes a match and triggers settlement
 func (s *gameEngineService) CompleteMatch(ctx context.Context, matchID uuid.UUID) error {
 	// Update match status
-	err := s.matchRepo.UpdateStatus(ctx, matchID, "COMPLETED")
+	err := s.matchRepo.UpdateStatus(ctx, matchID, string(models.MatchStatusCompleted))
 	if err != nil {
 		return fmt.Errorf("failed to update match status: %w", err)
 	}

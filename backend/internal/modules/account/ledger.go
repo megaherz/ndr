@@ -373,12 +373,12 @@ func (l *ledgerOperations) TransferFuel(ctx context.Context, fromUserID, toUserI
 	}
 	
 	// Update wallet balances
-	err = l.updateWalletBalance(ctx, fromUserID, "FUEL", amount.Neg())
+	err = l.updateWalletBalance(ctx, fromUserID, constants.CurrencyFUEL, amount.Neg())
 	if err != nil {
 		return fmt.Errorf("failed to update sender balance: %w", err)
 	}
 	
-	err = l.updateWalletBalance(ctx, toUserID, "FUEL", amount)
+	err = l.updateWalletBalance(ctx, toUserID, constants.CurrencyFUEL, amount)
 	if err != nil {
 		return fmt.Errorf("failed to update receiver balance: %w", err)
 	}
