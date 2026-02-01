@@ -113,7 +113,6 @@ make dev
 
 # Run tests
 make test
-make test-integration
 
 # Database migrations
 make migrate-up

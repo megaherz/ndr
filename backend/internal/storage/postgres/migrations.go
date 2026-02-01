@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/sirupsen/logrus"
 )
@@ -14,13 +14,15 @@ import (
 // MigrationRunner handles database migrations using golang-migrate
 type MigrationRunner struct {
 	db     *DB
+	dbURL  string
 	logger *logrus.Logger
 }
 
 // NewMigrationRunner creates a new migration runner
-func NewMigrationRunner(db *DB, logger *logrus.Logger) *MigrationRunner {
+func NewMigrationRunner(db *DB, dbURL string, logger *logrus.Logger) *MigrationRunner {
 	return &MigrationRunner{
 		db:     db,
+		dbURL:  dbURL,
 		logger: logger,
 	}
 }
@@ -29,23 +31,16 @@ func NewMigrationRunner(db *DB, logger *logrus.Logger) *MigrationRunner {
 func (m *MigrationRunner) RunMigrations(ctx context.Context, migrationsDir string) error {
 	m.logger.Info("Starting database migrations")
 
-	// Create a database driver instance
-	driver, err := postgres.WithInstance(m.db.DB.DB, &postgres.Config{})
-	if err != nil {
-		return fmt.Errorf("failed to create postgres driver: %w", err)
-	}
-
 	// Get absolute path for migrations
 	absPath, err := filepath.Abs(migrationsDir)
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path for migrations: %w", err)
 	}
 
-	// Create migrate instance
-	migrator, err := migrate.NewWithDatabaseInstance(
+	// Use direct database URL connection to avoid interfering with the main connection pool
+	migrator, err := migrate.New(
 		fmt.Sprintf("file://%s", absPath),
-		"postgres",
-		driver,
+		m.dbURL,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create migrator: %w", err)
@@ -104,23 +99,16 @@ func (m *MigrationRunner) GetAppliedMigrations(ctx context.Context) ([]string, e
 
 // GetMigrationVersion returns the current migration version
 func (m *MigrationRunner) GetMigrationVersion(migrationsDir string) (uint, bool, error) {
-	// Create a database driver instance
-	driver, err := postgres.WithInstance(m.db.DB.DB, &postgres.Config{})
-	if err != nil {
-		return 0, false, fmt.Errorf("failed to create postgres driver: %w", err)
-	}
-
 	// Get absolute path for migrations
 	absPath, err := filepath.Abs(migrationsDir)
 	if err != nil {
 		return 0, false, fmt.Errorf("failed to get absolute path for migrations: %w", err)
 	}
 
-	// Create migrate instance
-	migrator, err := migrate.NewWithDatabaseInstance(
+	// Create migrate instance using database URL
+	migrator, err := migrate.New(
 		fmt.Sprintf("file://%s", absPath),
-		"postgres",
-		driver,
+		m.dbURL,
 	)
 	if err != nil {
 		return 0, false, fmt.Errorf("failed to create migrator: %w", err)

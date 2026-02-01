@@ -59,10 +59,11 @@ func ValidateTelegramInitData(initData, botToken string) (*TelegramInitData, err
 
 	// Create data check string using original encoded values
 	// We need to reconstruct from the original initData string to preserve encoding
+	// Exclude both 'hash=' and 'signature=' fields from validation
 	pairs := strings.Split(initData, "&")
 	var dataPairs []string
 	for _, pair := range pairs {
-		if !strings.HasPrefix(pair, "hash=") {
+		if !strings.HasPrefix(pair, "hash=") && !strings.HasPrefix(pair, "signature=") {
 			dataPairs = append(dataPairs, pair)
 		}
 	}

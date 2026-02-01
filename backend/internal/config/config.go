@@ -17,6 +17,9 @@ type Config struct {
 	// JWT
 	JWTSecret string `env:"JWT_SECRET" env-required:"true" env-description:"JWT signing secret"`
 
+	// Telegram
+	TelegramBotToken string `env:"TELEGRAM_BOT_TOKEN" env-required:"true" env-description:"Telegram bot token for WebApp authentication"`
+
 	// Centrifugo
 	CentrifugoAPIKey   string `env:"CENTRIFUGO_API_KEY" env-required:"true" env-description:"Centrifugo API key"`
 	CentrifugoSecret   string `env:"CENTRIFUGO_SECRET" env-required:"true" env-description:"Centrifugo secret"`
