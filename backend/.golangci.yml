@@ -1,84 +1,77 @@
+version: "2"
 run:
-  timeout: 5m
   issues-exit-code: 1
   tests: true
-
 linters:
   enable:
     - errcheck
-    - gofmt
-    - goimports
-    - revive      # replaces deprecated golint
+    - gosec
     - govet
     - ineffassign
     - misspell
+    - revive
     - staticcheck
-    - unused      # replaces deprecated varcheck
-    - gosec
-
-linters-settings:
-  errcheck:
-    # List of functions to exclude from checking
-    # render.Render is commonly ignored because it's used for HTTP responses
-    # where the error is typically not actionable (client already disconnected, etc.)
-    exclude-functions:
-      - (github.com/go-chi/render.Render)
-      - (github.com/go-chi/render.Status)
-  
-  gosec:
-    # Exclude specific security rules
-    excludes:
-      - G112  # Potential Slowloris Attack (ReadHeaderTimeout not configured)
-  
-  revive:
-    # Enable only essential rules to avoid noise
+    - unused
+  settings:
+    errcheck:
+      exclude-functions:
+        - (github.com/go-chi/render.Render)
+        - (github.com/go-chi/render.Status)
+    gosec:
+      excludes:
+        - G112
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+        - name: var-naming
+          disabled: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      - name: exported
-        disabled: true  # Allow interface naming patterns like AuthService
-      - name: var-naming
-        disabled: true  # Allow underscore naming in some cases
-
+      - linters:
+          - dupl
+          - errcheck
+          - gosec
+          - revive
+        path: _test\.go
+      - linters:
+          - errcheck
+        text: Error return value of `render.Render` is not checked
+      - linters:
+          - errcheck
+        text: Error return value of `render.Status` is not checked
+      - linters:
+          - revive
+        text: unused-parameter
+      - linters:
+          - revive
+        text: blank-imports
+      - linters:
+          - revive
+        text: stutters; consider calling this Service
+      - linters:
+          - revive
+        text: stutters; consider calling this Result
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  # Exclude some linters from running on tests files
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - dupl
-        - gosec
-        - revive
-    
-    # Exclude render.Render error checks specifically
-    - text: "Error return value of `render.Render` is not checked"
-      linters:
-        - errcheck
-    
-    - text: "Error return value of `render.Status` is not checked"
-      linters:
-        - errcheck
-    
-    # Allow unused parameters in interface implementations and handlers
-    - text: "unused-parameter"
-      linters:
-        - revive
-    
-    # Allow blank imports for database drivers and similar
-    - text: "blank-imports"
-      linters:
-        - revive
-    
-    # Allow service interface naming patterns (common in Go)
-    - text: "stutters; consider calling this Service"
-      linters:
-        - revive
-    
-    # Allow result/response type naming patterns
-    - text: "stutters; consider calling this Result"
-      linters:
-        - revive
-
-  # Maximum issues count per one linter
   max-issues-per-linter: 50
-  
-  # Maximum count of issues with the same text
   max-same-issues: 10
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
