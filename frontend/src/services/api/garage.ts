@@ -47,7 +47,7 @@ export interface TransformedGarageData {
  * GET /api/v1/garage
  */
 export const fetchGarageState = async (): Promise<TransformedGarageData> => {
-  const response = await apiClient.get<GarageResponse>('/api/v1/garage')
+  const response = await apiClient.get<GarageResponse>('/garage')
   
   // Transform decimal strings to Decimal objects for consistent handling
   return {

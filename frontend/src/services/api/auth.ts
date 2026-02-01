@@ -10,7 +10,7 @@ import { User, AuthTokens } from '../../stores/authStore'
 
 // Login request payload
 export interface LoginRequest {
-  initData: string
+  init_data: string
   user: {
     id: number
     first_name: string
@@ -72,7 +72,7 @@ export async function loginWithTelegram(authPayload: TelegramAuthPayload): Promi
 
     // Prepare request payload
     const loginRequest: LoginRequest = {
-      initData: authPayload.initData,
+      init_data: authPayload.initData,
       user: authPayload.user,
     }
 

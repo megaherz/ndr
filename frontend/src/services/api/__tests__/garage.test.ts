@@ -53,7 +53,7 @@ describe('Garage API Service', () => {
       const result = await fetchGarageState()
 
       // Verify API call
-      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/garage')
+      expect(apiClient.get).toHaveBeenCalledWith('/garage')
 
       // Verify transformation
       expect(result).toEqual({

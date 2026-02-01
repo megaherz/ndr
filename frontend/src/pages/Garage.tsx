@@ -5,11 +5,16 @@ import { Decimal } from 'decimal.js'
 import { LeagueCard } from '../components/garage/LeagueCard'
 import { garageQueries } from '../services/api/garage'
 import { useWalletStore } from '../stores/walletStore'
+import { useAuthStore } from '../stores/authStore'
 import './Garage.css'
 
 const Garage: React.FC = () => {
   const navigate = useNavigate()
   const { setBalances, setLeagueAccess } = useWalletStore()
+  const { isAuthenticated, isTokenExpired } = useAuthStore()
+
+  // Only fetch garage state when user is authenticated
+  const shouldFetch = isAuthenticated && !isTokenExpired()
 
   // Fetch garage state using React Query
   const {
@@ -17,7 +22,10 @@ const Garage: React.FC = () => {
     isLoading,
     error,
     refetch
-  } = useQuery(garageQueries.stateOptions())
+  } = useQuery({
+    ...garageQueries.stateOptions(),
+    enabled: shouldFetch, // Only run query when authenticated
+  })
 
   // Update wallet store when garage data changes
   React.useEffect(() => {
@@ -50,13 +58,14 @@ const Garage: React.FC = () => {
     navigate('/gas-station')
   }
 
-  if (isLoading) {
+  // Show loading while authentication is in progress or data is loading
+  if (!shouldFetch || isLoading) {
     return (
       <div className="garage">
         <div className="garage__loading">
           <div className="garage__loading-spinner" />
-          <h2>Loading Garage...</h2>
-          <p>Preparing your racing experience</p>
+          <h2>{!shouldFetch ? 'Authenticating...' : 'Loading Garage...'}</h2>
+          <p>{!shouldFetch ? 'Verifying your credentials' : 'Preparing your racing experience'}</p>
         </div>
       </div>
     )
