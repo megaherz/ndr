@@ -24,16 +24,16 @@ type CrashSeedData struct {
 type ProvableFairnessEngine interface {
 	// GenerateCrashSeeds generates cryptographic seeds for all three heats
 	GenerateCrashSeeds(matchID uuid.UUID) (*CrashSeedData, error)
-	
+
 	// GenerateCommitHash generates a pre-commitment hash of the crash seeds
 	GenerateCommitHash(seedData *CrashSeedData) (string, error)
-	
+
 	// VerifyCommitHash verifies that the revealed seeds match the pre-commitment hash
 	VerifyCommitHash(seedData *CrashSeedData, commitHash string) bool
-	
+
 	// GenerateHeatSeed generates a single cryptographic seed for a heat
 	GenerateHeatSeed() (string, error)
-	
+
 	// DeriveRandomValue derives a deterministic random value from a seed and context
 	DeriveRandomValue(seed, context string) uint64
 }
@@ -52,17 +52,17 @@ func (p *provableFairnessEngine) GenerateCrashSeeds(matchID uuid.UUID) (*CrashSe
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate heat 1 seed: %w", err)
 	}
-	
+
 	heat2Seed, err := p.GenerateHeatSeed()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate heat 2 seed: %w", err)
 	}
-	
+
 	heat3Seed, err := p.GenerateHeatSeed()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate heat 3 seed: %w", err)
 	}
-	
+
 	seedData := &CrashSeedData{
 		Heat1Seed: heat1Seed,
 		Heat2Seed: heat2Seed,
@@ -70,7 +70,7 @@ func (p *provableFairnessEngine) GenerateCrashSeeds(matchID uuid.UUID) (*CrashSe
 		MatchID:   matchID.String(),
 		Timestamp: time.Now().Unix(),
 	}
-	
+
 	return seedData, nil
 }
 
@@ -81,10 +81,10 @@ func (p *provableFairnessEngine) GenerateCommitHash(seedData *CrashSeedData) (st
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal seed data: %w", err)
 	}
-	
+
 	// Generate SHA-256 hash
 	hash := sha256.Sum256(jsonData)
-	
+
 	// Return hex-encoded hash
 	return hex.EncodeToString(hash[:]), nil
 }
@@ -96,7 +96,7 @@ func (p *provableFairnessEngine) VerifyCommitHash(seedData *CrashSeedData, commi
 	if err != nil {
 		return false
 	}
-	
+
 	// Compare hashes (constant-time comparison for security)
 	return calculatedHash == commitHash
 }
@@ -109,7 +109,7 @@ func (p *provableFairnessEngine) GenerateHeatSeed() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to generate random bytes: %w", err)
 	}
-	
+
 	// Return hex-encoded seed
 	return hex.EncodeToString(randomBytes), nil
 }
@@ -118,35 +118,35 @@ func (p *provableFairnessEngine) GenerateHeatSeed() (string, error) {
 func (p *provableFairnessEngine) DeriveRandomValue(seed, context string) uint64 {
 	// Combine seed and context
 	combined := seed + ":" + context
-	
+
 	// Generate SHA-256 hash
 	hash := sha256.Sum256([]byte(combined))
-	
+
 	// Convert first 8 bytes to uint64 (big-endian)
 	var result uint64
 	for i := 0; i < 8; i++ {
 		result = (result << 8) | uint64(hash[i])
 	}
-	
+
 	return result
 }
 
 // GenerateMatchSeeds is a convenience function to generate and hash seeds for a match
 func GenerateMatchSeeds(matchID uuid.UUID) (seedData *CrashSeedData, commitHash string, err error) {
 	engine := NewProvableFairnessEngine()
-	
+
 	// Generate crash seeds
 	seedData, err = engine.GenerateCrashSeeds(matchID)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to generate crash seeds: %w", err)
 	}
-	
+
 	// Generate commitment hash
 	commitHash, err = engine.GenerateCommitHash(seedData)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to generate commit hash: %w", err)
 	}
-	
+
 	return seedData, commitHash, nil
 }
 
@@ -163,7 +163,7 @@ func GetHeatSeedFromMatch(crashSeedJSON string, heat int) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to unmarshal crash seed data: %w", err)
 	}
-	
+
 	switch heat {
 	case 1:
 		return seedData.Heat1Seed, nil

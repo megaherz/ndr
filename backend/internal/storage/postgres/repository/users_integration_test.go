@@ -28,7 +28,7 @@ func (suite *UserRepositoryIntegrationTestSuite) SetupSuite() {
 	// Setup database helper
 	suite.dbHelper = NewTestDBHelper(suite.T())
 	suite.dbHelper.SetupDatabase()
-	
+
 	// Create repository instance
 	suite.repository = NewUserRepository(suite.dbHelper.DB)
 }
@@ -42,10 +42,9 @@ func (suite *UserRepositoryIntegrationTestSuite) SetupTest() {
 	suite.dbHelper.CleanupTables("users")
 }
 
-
 func (suite *UserRepositoryIntegrationTestSuite) TestCreate() {
 	ctx := context.Background()
-	
+
 	user := &models.User{
 		ID:                uuid.New(),
 		TelegramID:        123456789,
@@ -55,10 +54,10 @@ func (suite *UserRepositoryIntegrationTestSuite) TestCreate() {
 		CreatedAt:         time.Now().UTC(),
 		UpdatedAt:         time.Now().UTC(),
 	}
-	
+
 	err := suite.repository.Create(ctx, user)
 	require.NoError(suite.T(), err)
-	
+
 	// Verify user was created
 	var count int
 	err = suite.dbHelper.DB.Get(&count, "SELECT COUNT(*) FROM users WHERE id = $1", user.ID)
@@ -68,9 +67,9 @@ func (suite *UserRepositoryIntegrationTestSuite) TestCreate() {
 
 func (suite *UserRepositoryIntegrationTestSuite) TestCreate_DuplicateTelegramID() {
 	ctx := context.Background()
-	
+
 	telegramID := int64(123456789)
-	
+
 	// Create first user
 	user1 := &models.User{
 		ID:                uuid.New(),
@@ -79,10 +78,10 @@ func (suite *UserRepositoryIntegrationTestSuite) TestCreate_DuplicateTelegramID(
 		CreatedAt:         time.Now().UTC(),
 		UpdatedAt:         time.Now().UTC(),
 	}
-	
+
 	err := suite.repository.Create(ctx, user1)
 	require.NoError(suite.T(), err)
-	
+
 	// Try to create second user with same Telegram ID
 	user2 := &models.User{
 		ID:                uuid.New(),
@@ -91,7 +90,7 @@ func (suite *UserRepositoryIntegrationTestSuite) TestCreate_DuplicateTelegramID(
 		CreatedAt:         time.Now().UTC(),
 		UpdatedAt:         time.Now().UTC(),
 	}
-	
+
 	err = suite.repository.Create(ctx, user2)
 	assert.Error(suite.T(), err)
 	assert.Contains(suite.T(), err.Error(), "duplicate key")
@@ -99,7 +98,7 @@ func (suite *UserRepositoryIntegrationTestSuite) TestCreate_DuplicateTelegramID(
 
 func (suite *UserRepositoryIntegrationTestSuite) TestGetByID() {
 	ctx := context.Background()
-	
+
 	// Create a user first
 	now := time.Now().UTC().Truncate(time.Microsecond) // Use UTC and truncate for comparison
 	originalUser := &models.User{
@@ -111,22 +110,22 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetByID() {
 		CreatedAt:         now,
 		UpdatedAt:         now,
 	}
-	
+
 	err := suite.repository.Create(ctx, originalUser)
 	require.NoError(suite.T(), err)
-	
+
 	// Retrieve the user
 	retrievedUser, err := suite.repository.GetByID(ctx, originalUser.ID)
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), retrievedUser)
-	
+
 	// Compare all fields
 	assert.Equal(suite.T(), originalUser.ID, retrievedUser.ID)
 	assert.Equal(suite.T(), originalUser.TelegramID, retrievedUser.TelegramID)
 	assert.Equal(suite.T(), originalUser.TelegramUsername, retrievedUser.TelegramUsername)
 	assert.Equal(suite.T(), originalUser.TelegramFirstName, retrievedUser.TelegramFirstName)
 	assert.Equal(suite.T(), originalUser.TelegramLastName, retrievedUser.TelegramLastName)
-	
+
 	// Time comparison with tolerance
 	assert.WithinDuration(suite.T(), originalUser.CreatedAt, retrievedUser.CreatedAt, time.Second)
 	assert.WithinDuration(suite.T(), originalUser.UpdatedAt, retrievedUser.UpdatedAt, time.Second)
@@ -134,19 +133,19 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetByID() {
 
 func (suite *UserRepositoryIntegrationTestSuite) TestGetByID_NotFound() {
 	ctx := context.Background()
-	
+
 	nonExistentID := uuid.New()
 	user, err := suite.repository.GetByID(ctx, nonExistentID)
-	
+
 	require.NoError(suite.T(), err)
 	assert.Nil(suite.T(), user)
 }
 
 func (suite *UserRepositoryIntegrationTestSuite) TestGetByTelegramID() {
 	ctx := context.Background()
-	
+
 	telegramID := int64(987654321)
-	
+
 	// Create a user
 	now := time.Now().UTC().Truncate(time.Microsecond)
 	originalUser := &models.User{
@@ -158,31 +157,31 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetByTelegramID() {
 		CreatedAt:         now,
 		UpdatedAt:         now,
 	}
-	
+
 	err := suite.repository.Create(ctx, originalUser)
 	require.NoError(suite.T(), err)
-	
+
 	// Retrieve by Telegram ID
 	retrievedUser, err := suite.repository.GetByTelegramID(ctx, telegramID)
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), retrievedUser)
-	
+
 	assert.Equal(suite.T(), originalUser.ID, retrievedUser.ID)
 	assert.Equal(suite.T(), originalUser.TelegramID, retrievedUser.TelegramID)
 }
 
 func (suite *UserRepositoryIntegrationTestSuite) TestGetByTelegramID_NotFound() {
 	ctx := context.Background()
-	
+
 	user, err := suite.repository.GetByTelegramID(ctx, 999999999)
-	
+
 	require.NoError(suite.T(), err)
 	assert.Nil(suite.T(), user)
 }
 
 func (suite *UserRepositoryIntegrationTestSuite) TestUpdateTelegramInfo() {
 	ctx := context.Background()
-	
+
 	// Create a user
 	user := &models.User{
 		ID:                uuid.New(),
@@ -193,39 +192,39 @@ func (suite *UserRepositoryIntegrationTestSuite) TestUpdateTelegramInfo() {
 		CreatedAt:         time.Now().UTC(),
 		UpdatedAt:         time.Now().UTC(),
 	}
-	
+
 	err := suite.repository.Create(ctx, user)
 	require.NoError(suite.T(), err)
-	
+
 	// Add a small delay to ensure updated_at will be different
 	time.Sleep(10 * time.Millisecond)
-	
+
 	// Update Telegram info
 	newUsername := "newusername"
 	newFirstName := "New"
 	newLastName := "UpdatedName"
-	
-	err = suite.repository.UpdateTelegramInfo(ctx, user.ID, newUsername, newFirstName, newLastName)
+
+	err = suite.repository.UpdateTelegramInfo(ctx, user.ID, newUsername, newFirstName, newLastName, "")
 	require.NoError(suite.T(), err)
-	
+
 	// Verify update
 	updatedUser, err := suite.repository.GetByID(ctx, user.ID)
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), updatedUser)
-	
+
 	assert.Equal(suite.T(), newUsername, *updatedUser.TelegramUsername)
 	assert.Equal(suite.T(), newFirstName, updatedUser.TelegramFirstName)
 	assert.Equal(suite.T(), newLastName, *updatedUser.TelegramLastName)
-	
+
 	// Verify updated_at was changed
 	assert.True(suite.T(), updatedUser.UpdatedAt.After(user.UpdatedAt))
 }
 
 func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_ExistingUser() {
 	ctx := context.Background()
-	
+
 	telegramID := int64(555666777)
-	
+
 	// Create an existing user
 	existingUser := &models.User{
 		ID:                uuid.New(),
@@ -236,25 +235,26 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_Exi
 		CreatedAt:         time.Now().UTC(),
 		UpdatedAt:         time.Now().UTC(),
 	}
-	
+
 	err := suite.repository.Create(ctx, existingUser)
 	require.NoError(suite.T(), err)
-	
+
 	// Add a small delay to ensure updated_at will be different
 	time.Sleep(10 * time.Millisecond)
-	
+
 	// Call GetOrCreateByTelegramID with updated info
 	user, err := suite.repository.GetOrCreateByTelegramID(
-		ctx, 
-		telegramID, 
-		"updated_username", 
-		"Updated", 
+		ctx,
+		telegramID,
+		"updated_username",
+		"Updated",
 		"Name",
+		"",
 	)
-	
+
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), user)
-	
+
 	// Should return the same user ID but with updated info
 	assert.Equal(suite.T(), existingUser.ID, user.ID)
 	assert.Equal(suite.T(), "updated_username", *user.TelegramUsername)
@@ -264,9 +264,9 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_Exi
 
 func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_NewUser() {
 	ctx := context.Background()
-	
+
 	telegramID := int64(888999000)
-	
+
 	// Call GetOrCreateByTelegramID for non-existing user
 	user, err := suite.repository.GetOrCreateByTelegramID(
 		ctx,
@@ -274,17 +274,18 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_New
 		"new_user",
 		"New",
 		"User",
+		"",
 	)
-	
+
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), user)
-	
+
 	// Verify it's a new user
 	assert.Equal(suite.T(), telegramID, user.TelegramID)
 	assert.Equal(suite.T(), "new_user", *user.TelegramUsername)
 	assert.Equal(suite.T(), "New", user.TelegramFirstName)
 	assert.Equal(suite.T(), "User", *user.TelegramLastName)
-	
+
 	// Verify user was actually created in database
 	dbUser, err := suite.repository.GetByTelegramID(ctx, telegramID)
 	require.NoError(suite.T(), err)
@@ -294,9 +295,9 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_New
 
 func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_EmptyOptionalFields() {
 	ctx := context.Background()
-	
+
 	telegramID := int64(111222333)
-	
+
 	// Call with empty username and last name
 	user, err := suite.repository.GetOrCreateByTelegramID(
 		ctx,
@@ -304,11 +305,12 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_Emp
 		"", // empty username
 		"FirstOnly",
 		"", // empty last name
+		"", // empty photo URL
 	)
-	
+
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), user)
-	
+
 	// Verify optional fields are nil when empty
 	assert.Nil(suite.T(), user.TelegramUsername)
 	assert.Equal(suite.T(), "FirstOnly", user.TelegramFirstName)
@@ -317,7 +319,7 @@ func (suite *UserRepositoryIntegrationTestSuite) TestGetOrCreateByTelegramID_Emp
 
 func (suite *UserRepositoryIntegrationTestSuite) TestList() {
 	ctx := context.Background()
-	
+
 	// Create multiple users
 	now := time.Now().UTC()
 	users := []*models.User{
@@ -343,21 +345,21 @@ func (suite *UserRepositoryIntegrationTestSuite) TestList() {
 			UpdatedAt:         now.Add(-1 * time.Hour),
 		},
 	}
-	
+
 	for _, user := range users {
 		err := suite.repository.Create(ctx, user)
 		require.NoError(suite.T(), err)
 	}
-	
+
 	// Test pagination
 	retrievedUsers, err := suite.repository.List(ctx, 2, 0)
 	require.NoError(suite.T(), err)
 	assert.Len(suite.T(), retrievedUsers, 2)
-	
+
 	// Should be ordered by created_at DESC (newest first)
 	assert.Equal(suite.T(), "User3", retrievedUsers[0].TelegramFirstName)
 	assert.Equal(suite.T(), "User2", retrievedUsers[1].TelegramFirstName)
-	
+
 	// Test second page
 	retrievedUsers, err = suite.repository.List(ctx, 2, 2)
 	require.NoError(suite.T(), err)
@@ -367,12 +369,12 @@ func (suite *UserRepositoryIntegrationTestSuite) TestList() {
 
 func (suite *UserRepositoryIntegrationTestSuite) TestCount() {
 	ctx := context.Background()
-	
+
 	// Initially should be 0
 	count, err := suite.repository.Count(ctx)
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), int64(0), count)
-	
+
 	// Create some users
 	for i := 0; i < 5; i++ {
 		user := &models.User{
@@ -382,11 +384,11 @@ func (suite *UserRepositoryIntegrationTestSuite) TestCount() {
 			CreatedAt:         time.Now().UTC(),
 			UpdatedAt:         time.Now().UTC(),
 		}
-		
+
 		err := suite.repository.Create(ctx, user)
 		require.NoError(suite.T(), err)
 	}
-	
+
 	// Count should be 5
 	count, err = suite.repository.Count(ctx)
 	require.NoError(suite.T(), err)

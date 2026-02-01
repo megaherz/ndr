@@ -35,9 +35,9 @@ type JoinMatchmakingRequest struct {
 
 // JoinMatchmakingResponse represents the response from joining matchmaking
 type JoinMatchmakingResponse struct {
-	Success     bool                        `json:"success"`
-	QueueStatus *matchmaker.QueueStatus     `json:"queue_status,omitempty"`
-	Error       string                      `json:"error,omitempty"`
+	Success     bool                    `json:"success"`
+	QueueStatus *matchmaker.QueueStatus `json:"queue_status,omitempty"`
+	Error       string                  `json:"error,omitempty"`
 }
 
 // CancelMatchmakingRequest represents the request to cancel matchmaking
@@ -58,10 +58,10 @@ func (h *MatchmakingHandler) HandleJoinMatchmaking(ctx context.Context, data []b
 		h.logger.WithFields(logrus.Fields{
 			"error": err,
 		}).Warn("Failed to unmarshal join matchmaking request")
-		
+
 		return h.errorResponse("Invalid request format")
 	}
-	
+
 	// Validate request
 	if req.UserID == "" {
 		return h.errorResponse("user_id is required")
@@ -72,18 +72,18 @@ func (h *MatchmakingHandler) HandleJoinMatchmaking(ctx context.Context, data []b
 	if req.League == "" {
 		return h.errorResponse("league is required")
 	}
-	
+
 	// Parse user ID
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		return h.errorResponse("Invalid user_id format")
 	}
-	
+
 	// Validate league
 	if !constants.IsValidLeague(req.League) {
 		return h.errorResponse("Invalid league")
 	}
-	
+
 	// Join matchmaking queue
 	queueStatus, err := h.matchmakerService.JoinQueue(ctx, userID, req.DisplayName, req.League)
 	if err != nil {
@@ -93,10 +93,10 @@ func (h *MatchmakingHandler) HandleJoinMatchmaking(ctx context.Context, data []b
 			"league":       req.League,
 			"error":        err,
 		}).Error("Failed to join matchmaking queue")
-		
+
 		return h.errorResponse(fmt.Sprintf("Failed to join queue: %s", err.Error()))
 	}
-	
+
 	h.logger.WithFields(logrus.Fields{
 		"user_id":      userID,
 		"display_name": req.DisplayName,
@@ -104,13 +104,13 @@ func (h *MatchmakingHandler) HandleJoinMatchmaking(ctx context.Context, data []b
 		"position":     queueStatus.Position,
 		"queue_size":   queueStatus.QueueSize,
 	}).Info("User joined matchmaking queue via RPC")
-	
+
 	// Return success response
 	response := JoinMatchmakingResponse{
 		Success:     true,
 		QueueStatus: queueStatus,
 	}
-	
+
 	return json.Marshal(response)
 }
 
@@ -121,21 +121,21 @@ func (h *MatchmakingHandler) HandleCancelMatchmaking(ctx context.Context, data [
 		h.logger.WithFields(logrus.Fields{
 			"error": err,
 		}).Warn("Failed to unmarshal cancel matchmaking request")
-		
+
 		return h.errorResponse("Invalid request format")
 	}
-	
+
 	// Validate request
 	if req.UserID == "" {
 		return h.errorResponse("user_id is required")
 	}
-	
+
 	// Parse user ID
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		return h.errorResponse("Invalid user_id format")
 	}
-	
+
 	// Cancel matchmaking
 	err = h.matchmakerService.CancelQueue(ctx, userID)
 	if err != nil {
@@ -143,19 +143,19 @@ func (h *MatchmakingHandler) HandleCancelMatchmaking(ctx context.Context, data [
 			"user_id": userID,
 			"error":   err,
 		}).Error("Failed to cancel matchmaking queue")
-		
+
 		return h.errorResponse(fmt.Sprintf("Failed to cancel queue: %s", err.Error()))
 	}
-	
+
 	h.logger.WithFields(logrus.Fields{
 		"user_id": userID,
 	}).Info("User cancelled matchmaking queue via RPC")
-	
+
 	// Return success response
 	response := CancelMatchmakingResponse{
 		Success: true,
 	}
-	
+
 	return json.Marshal(response)
 }
 
@@ -165,11 +165,11 @@ func (h *MatchmakingHandler) errorResponse(message string) ([]byte, error) {
 		Success: false,
 		Error:   message,
 	}
-	
+
 	data, err := json.Marshal(response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal error response: %w", err)
 	}
-	
+
 	return data, nil
 }

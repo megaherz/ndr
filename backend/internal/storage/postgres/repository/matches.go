@@ -15,37 +15,37 @@ import (
 type MatchRepository interface {
 	// Create creates a new match
 	Create(ctx context.Context, match *models.Match) error
-	
+
 	// GetByID retrieves a match by ID
 	GetByID(ctx context.Context, matchID uuid.UUID) (*models.Match, error)
-	
+
 	// UpdateStatus updates the match status
 	UpdateStatus(ctx context.Context, matchID uuid.UUID, status string) error
-	
+
 	// SetStartTime sets the match start timestamp
 	SetStartTime(ctx context.Context, matchID uuid.UUID) error
-	
+
 	// SetCompletionTime sets the match completion timestamp
 	SetCompletionTime(ctx context.Context, matchID uuid.UUID) error
-	
+
 	// GetActiveMatches retrieves all matches that are currently in progress
 	GetActiveMatches(ctx context.Context) ([]*models.Match, error)
-	
+
 	// GetMatchHistory retrieves match history for a user with pagination
 	GetMatchHistory(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*models.Match, error)
-	
+
 	// GetLeagueStats retrieves statistics for a league (total matches, avg prize pool, etc.)
 	GetLeagueStats(ctx context.Context, league string) (*LeagueStats, error)
 }
 
 // LeagueStats represents statistics for a league
 type LeagueStats struct {
-	League           string          `json:"league"`
-	TotalMatches     int64           `json:"total_matches"`
-	ActiveMatches    int64           `json:"active_matches"`
-	AvgPrizePool     decimal.Decimal `json:"avg_prize_pool"`
-	TotalPrizePool   decimal.Decimal `json:"total_prize_pool"`
-	TotalRakeAmount  decimal.Decimal `json:"total_rake_amount"`
+	League          string          `json:"league"`
+	TotalMatches    int64           `json:"total_matches"`
+	ActiveMatches   int64           `json:"active_matches"`
+	AvgPrizePool    decimal.Decimal `json:"avg_prize_pool"`
+	TotalPrizePool  decimal.Decimal `json:"total_prize_pool"`
+	TotalRakeAmount decimal.Decimal `json:"total_rake_amount"`
 }
 
 // matchRepository implements MatchRepository
@@ -67,7 +67,7 @@ func (r *matchRepository) Create(ctx context.Context, match *models.Match) error
 		VALUES (:id, :league, :status, :live_player_count, :ghost_player_count,
 		        :prize_pool, :rake_amount, :crash_seed, :crash_seed_hash,
 		        :started_at, :completed_at, :created_at)`
-	
+
 	_, err := r.db.NamedExecContext(ctx, query, match)
 	return err
 }
@@ -81,7 +81,7 @@ func (r *matchRepository) GetByID(ctx context.Context, matchID uuid.UUID) (*mode
 		       started_at, completed_at, created_at
 		FROM matches 
 		WHERE id = $1`
-	
+
 	err := r.db.GetContext(ctx, match, query, matchID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -89,7 +89,7 @@ func (r *matchRepository) GetByID(ctx context.Context, matchID uuid.UUID) (*mode
 		}
 		return nil, err
 	}
-	
+
 	return match, nil
 }
 
@@ -124,7 +124,7 @@ func (r *matchRepository) GetActiveMatches(ctx context.Context) ([]*models.Match
 		FROM matches 
 		WHERE status IN ('FORMING', 'IN_PROGRESS')
 		ORDER BY created_at ASC`
-	
+
 	err := r.db.SelectContext(ctx, &matches, query)
 	return matches, err
 }
@@ -141,7 +141,7 @@ func (r *matchRepository) GetMatchHistory(ctx context.Context, userID uuid.UUID,
 		WHERE mp.user_id = $1 AND mp.is_ghost = FALSE
 		ORDER BY m.created_at DESC
 		LIMIT $2 OFFSET $3`
-	
+
 	err := r.db.SelectContext(ctx, &matches, query, userID, limit, offset)
 	return matches, err
 }
@@ -149,7 +149,7 @@ func (r *matchRepository) GetMatchHistory(ctx context.Context, userID uuid.UUID,
 // GetLeagueStats retrieves statistics for a league
 func (r *matchRepository) GetLeagueStats(ctx context.Context, league string) (*LeagueStats, error) {
 	stats := &LeagueStats{League: league}
-	
+
 	// Get basic match counts and prize pool stats
 	query := `
 		SELECT 
@@ -160,7 +160,7 @@ func (r *matchRepository) GetLeagueStats(ctx context.Context, league string) (*L
 			COALESCE(SUM(rake_amount), 0) as total_rake_amount
 		FROM matches 
 		WHERE league = $1`
-	
+
 	row := r.db.QueryRowContext(ctx, query, league)
 	err := row.Scan(
 		&stats.TotalMatches,
@@ -172,6 +172,6 @@ func (r *matchRepository) GetLeagueStats(ctx context.Context, league string) (*L
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return stats, nil
 }

@@ -56,6 +56,15 @@ Nitro Drag Royale is a fast-paced multiplayer racing game where players compete 
    - Backend API: http://localhost:8080
    - Metrics: http://localhost:9090/metrics
 
+### Mobile Debugging
+
+For debugging the Telegram Mini App on mobile devices, we use [Eruda](https://github.com/liriliri/eruda):
+
+- **Auto-enabled** in development mode
+- **Manual activation**: Add `?debug=true` to URL or use `NDR_DEBUG.show()`
+- **Features**: Console, DOM inspector, network monitor, device info
+- **See**: [Frontend README](frontend/README.md) for detailed debugging guide
+
 ### Environment Configuration
 
 Copy the example environment files and configure:
@@ -163,7 +172,6 @@ npm run generate-types
 ### Backend Tests
 ```bash
 make test              # Unit tests
-make test-integration  # Integration tests (requires Docker)
 make test-coverage     # Coverage report
 ```
 

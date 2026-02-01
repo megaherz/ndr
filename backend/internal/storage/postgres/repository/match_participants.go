@@ -15,40 +15,40 @@ import (
 type MatchParticipantRepository interface {
 	// Create creates a new match participant
 	Create(ctx context.Context, participant *models.MatchParticipant) error
-	
+
 	// CreateBatch creates multiple match participants in a transaction
 	CreateBatch(ctx context.Context, participants []*models.MatchParticipant) error
-	
+
 	// GetByMatchID retrieves all participants for a match
 	GetByMatchID(ctx context.Context, matchID uuid.UUID) ([]*models.MatchParticipant, error)
-	
+
 	// GetByMatchAndUser retrieves a specific participant in a match
 	GetByMatchAndUser(ctx context.Context, matchID, userID uuid.UUID) (*models.MatchParticipant, error)
-	
+
 	// UpdateHeatScore updates a participant's score for a specific heat
 	UpdateHeatScore(ctx context.Context, matchID, userID uuid.UUID, heat int, score decimal.Decimal) error
-	
+
 	// UpdateTotalScore updates a participant's total score
 	UpdateTotalScore(ctx context.Context, matchID, userID uuid.UUID, totalScore decimal.Decimal) error
-	
+
 	// SetFinalPosition sets the final position for a participant
 	SetFinalPosition(ctx context.Context, matchID, userID uuid.UUID, position int) error
-	
+
 	// SetPrizeAmount sets the prize amount for a participant
 	SetPrizeAmount(ctx context.Context, matchID, userID uuid.UUID, prizeAmount decimal.Decimal) error
-	
+
 	// SetBurnReward sets the BURN reward for a participant
 	SetBurnReward(ctx context.Context, matchID, userID uuid.UUID, burnReward decimal.Decimal) error
-	
+
 	// GetLiveParticipants retrieves only live (non-ghost) participants for a match
 	GetLiveParticipants(ctx context.Context, matchID uuid.UUID) ([]*models.MatchParticipant, error)
-	
+
 	// GetGhostParticipants retrieves only ghost participants for a match
 	GetGhostParticipants(ctx context.Context, matchID uuid.UUID) ([]*models.MatchParticipant, error)
-	
+
 	// GetStandings retrieves participants ordered by total score (for standings)
 	GetStandings(ctx context.Context, matchID uuid.UUID) ([]*models.MatchParticipant, error)
-	
+
 	// GetUserStats retrieves statistics for a user across all matches
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*UserStats, error)
 }
@@ -57,9 +57,9 @@ type MatchParticipantRepository interface {
 type UserStats struct {
 	UserID          uuid.UUID       `json:"user_id"`
 	TotalMatches    int64           `json:"total_matches"`
-	TotalWins       int64           `json:"total_wins"`      // 1st place finishes
-	TotalPodiums    int64           `json:"total_podiums"`   // Top 3 finishes
-	TotalEarnings   decimal.Decimal `json:"total_earnings"`  // Prize money won
+	TotalWins       int64           `json:"total_wins"`        // 1st place finishes
+	TotalPodiums    int64           `json:"total_podiums"`     // Top 3 finishes
+	TotalEarnings   decimal.Decimal `json:"total_earnings"`    // Prize money won
 	TotalBurnEarned decimal.Decimal `json:"total_burn_earned"` // BURN rewards
 	AvgPosition     float64         `json:"avg_position"`
 	BestPosition    int             `json:"best_position"`
@@ -87,7 +87,7 @@ func (r *matchParticipantRepository) Create(ctx context.Context, participant *mo
 		        :player_display_name, :buyin_amount, :heat1_score,
 		        :heat2_score, :heat3_score, :total_score,
 		        :final_position, :prize_amount, :burn_reward, :created_at)`
-	
+
 	_, err := r.db.NamedExecContext(ctx, query, participant)
 	return err
 }
@@ -97,13 +97,13 @@ func (r *matchParticipantRepository) CreateBatch(ctx context.Context, participan
 	if len(participants) == 0 {
 		return nil
 	}
-	
+
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
-	
+	defer func() { _ = tx.Rollback() }()
+
 	query := `
 		INSERT INTO match_participants (match_id, user_id, is_ghost, ghost_replay_id,
 		                               player_display_name, buyin_amount, heat1_score,
@@ -113,14 +113,14 @@ func (r *matchParticipantRepository) CreateBatch(ctx context.Context, participan
 		        :player_display_name, :buyin_amount, :heat1_score,
 		        :heat2_score, :heat3_score, :total_score,
 		        :final_position, :prize_amount, :burn_reward, :created_at)`
-	
+
 	for _, participant := range participants {
 		_, err := tx.NamedExecContext(ctx, query, participant)
 		if err != nil {
 			return err
 		}
 	}
-	
+
 	return tx.Commit()
 }
 
@@ -134,7 +134,7 @@ func (r *matchParticipantRepository) GetByMatchID(ctx context.Context, matchID u
 		FROM match_participants 
 		WHERE match_id = $1
 		ORDER BY created_at ASC`
-	
+
 	err := r.db.SelectContext(ctx, &participants, query, matchID)
 	return participants, err
 }
@@ -148,7 +148,7 @@ func (r *matchParticipantRepository) GetByMatchAndUser(ctx context.Context, matc
 		       final_position, prize_amount, burn_reward, created_at
 		FROM match_participants 
 		WHERE match_id = $1 AND user_id = $2`
-	
+
 	err := r.db.GetContext(ctx, participant, query, matchID, userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -156,7 +156,7 @@ func (r *matchParticipantRepository) GetByMatchAndUser(ctx context.Context, matc
 		}
 		return nil, err
 	}
-	
+
 	return participant, nil
 }
 
@@ -173,7 +173,7 @@ func (r *matchParticipantRepository) UpdateHeatScore(ctx context.Context, matchI
 	default:
 		return sql.ErrNoRows
 	}
-	
+
 	_, err := r.db.ExecContext(ctx, query, matchID, userID, score)
 	return err
 }
@@ -216,7 +216,7 @@ func (r *matchParticipantRepository) GetLiveParticipants(ctx context.Context, ma
 		FROM match_participants 
 		WHERE match_id = $1 AND is_ghost = FALSE
 		ORDER BY created_at ASC`
-	
+
 	err := r.db.SelectContext(ctx, &participants, query, matchID)
 	return participants, err
 }
@@ -231,7 +231,7 @@ func (r *matchParticipantRepository) GetGhostParticipants(ctx context.Context, m
 		FROM match_participants 
 		WHERE match_id = $1 AND is_ghost = TRUE
 		ORDER BY created_at ASC`
-	
+
 	err := r.db.SelectContext(ctx, &participants, query, matchID)
 	return participants, err
 }
@@ -251,7 +251,7 @@ func (r *matchParticipantRepository) GetStandings(ctx context.Context, matchID u
 			heat2_score DESC NULLS LAST,
 			heat1_score DESC NULLS LAST,
 			created_at ASC`
-	
+
 	err := r.db.SelectContext(ctx, &participants, query, matchID)
 	return participants, err
 }
@@ -259,7 +259,7 @@ func (r *matchParticipantRepository) GetStandings(ctx context.Context, matchID u
 // GetUserStats retrieves statistics for a user across all matches
 func (r *matchParticipantRepository) GetUserStats(ctx context.Context, userID uuid.UUID) (*UserStats, error) {
 	stats := &UserStats{UserID: userID}
-	
+
 	query := `
 		SELECT 
 			COUNT(*) as total_matches,
@@ -272,7 +272,7 @@ func (r *matchParticipantRepository) GetUserStats(ctx context.Context, userID uu
 			COALESCE(MAX(final_position), 0) as worst_position
 		FROM match_participants 
 		WHERE user_id = $1 AND is_ghost = FALSE AND final_position IS NOT NULL`
-	
+
 	row := r.db.QueryRowContext(ctx, query, userID)
 	err := row.Scan(
 		&stats.TotalMatches,
@@ -287,6 +287,6 @@ func (r *matchParticipantRepository) GetUserStats(ctx context.Context, userID uu
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return stats, nil
 }

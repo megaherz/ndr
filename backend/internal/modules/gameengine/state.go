@@ -15,10 +15,10 @@ import (
 type MatchStatus string
 
 const (
-	MatchStatusForming     MatchStatus = "FORMING"
-	MatchStatusInProgress  MatchStatus = "IN_PROGRESS"
-	MatchStatusCompleted   MatchStatus = "COMPLETED"
-	MatchStatusAborted     MatchStatus = "ABORTED"
+	MatchStatusForming    MatchStatus = "FORMING"
+	MatchStatusInProgress MatchStatus = "IN_PROGRESS"
+	MatchStatusCompleted  MatchStatus = "COMPLETED"
+	MatchStatusAborted    MatchStatus = "ABORTED"
 )
 
 // HeatStatus represents the status of a heat
@@ -36,60 +36,60 @@ const (
 type MatchStateManager interface {
 	// CreateMatchState creates a new match state
 	CreateMatchState(ctx context.Context, matchID uuid.UUID, league string, players []*MatchPlayer) error
-	
+
 	// GetMatchState retrieves a match state
 	GetMatchState(ctx context.Context, matchID uuid.UUID) (*InMemoryMatchState, error)
-	
+
 	// UpdateMatchStatus updates the match status
 	UpdateMatchStatus(ctx context.Context, matchID uuid.UUID, status MatchStatus) error
-	
+
 	// StartHeat starts a specific heat
 	StartHeat(ctx context.Context, matchID uuid.UUID, heat int) error
-	
+
 	// EndHeat ends the current heat
 	EndHeat(ctx context.Context, matchID uuid.UUID) error
-	
+
 	// LockPlayerScore locks a player's score for the current heat
 	LockPlayerScore(ctx context.Context, matchID, userID uuid.UUID, score decimal.Decimal) error
-	
+
 	// GetActiveMatches returns all active match IDs
 	GetActiveMatches(ctx context.Context) []uuid.UUID
-	
+
 	// RemoveMatchState removes a match state from memory
 	RemoveMatchState(ctx context.Context, matchID uuid.UUID) error
 }
 
 // InMemoryMatchState represents the in-memory state of a match
 type InMemoryMatchState struct {
-	MatchID       uuid.UUID                    `json:"match_id"`
-	League        string                       `json:"league"`
-	Status        MatchStatus                  `json:"status"`
-	CurrentHeat   int                          `json:"current_heat"`    // 1, 2, or 3
-	HeatStatus    HeatStatus                   `json:"heat_status"`
-	HeatStartTime *time.Time                   `json:"heat_start_time,omitempty"`
-	HeatEndTime   *time.Time                   `json:"heat_end_time,omitempty"`
+	MatchID       uuid.UUID                     `json:"match_id"`
+	League        string                        `json:"league"`
+	Status        MatchStatus                   `json:"status"`
+	CurrentHeat   int                           `json:"current_heat"` // 1, 2, or 3
+	HeatStatus    HeatStatus                    `json:"heat_status"`
+	HeatStartTime *time.Time                    `json:"heat_start_time,omitempty"`
+	HeatEndTime   *time.Time                    `json:"heat_end_time,omitempty"`
 	Players       map[uuid.UUID]*InMemoryPlayer `json:"players"`
-	CreatedAt     time.Time                    `json:"created_at"`
-	UpdatedAt     time.Time                    `json:"updated_at"`
-	
+	CreatedAt     time.Time                     `json:"created_at"`
+	UpdatedAt     time.Time                     `json:"updated_at"`
+
 	// Synchronization
 	mu sync.RWMutex `json:"-"`
 }
 
 // InMemoryPlayer represents a player's state in memory
 type InMemoryPlayer struct {
-	UserID       *uuid.UUID       `json:"user_id,omitempty"`
-	DisplayName  string           `json:"display_name"`
-	IsGhost      bool             `json:"is_ghost"`
-	GhostReplayID *uuid.UUID      `json:"ghost_replay_id,omitempty"`
-	Heat1Score   *decimal.Decimal `json:"heat1_score,omitempty"`
-	Heat2Score   *decimal.Decimal `json:"heat2_score,omitempty"`
-	Heat3Score   *decimal.Decimal `json:"heat3_score,omitempty"`
-	TotalScore   decimal.Decimal  `json:"total_score"`
-	Position     int              `json:"position"`
-	IsAlive      bool             `json:"is_alive"`     // False if crashed in current heat
-	HasLocked    bool             `json:"has_locked"`   // True if locked score in current heat
-	LockTime     *time.Time       `json:"lock_time,omitempty"` // When they locked
+	UserID        *uuid.UUID       `json:"user_id,omitempty"`
+	DisplayName   string           `json:"display_name"`
+	IsGhost       bool             `json:"is_ghost"`
+	GhostReplayID *uuid.UUID       `json:"ghost_replay_id,omitempty"`
+	Heat1Score    *decimal.Decimal `json:"heat1_score,omitempty"`
+	Heat2Score    *decimal.Decimal `json:"heat2_score,omitempty"`
+	Heat3Score    *decimal.Decimal `json:"heat3_score,omitempty"`
+	TotalScore    decimal.Decimal  `json:"total_score"`
+	Position      int              `json:"position"`
+	IsAlive       bool             `json:"is_alive"`            // False if crashed in current heat
+	HasLocked     bool             `json:"has_locked"`          // True if locked score in current heat
+	LockTime      *time.Time       `json:"lock_time,omitempty"` // When they locked
 }
 
 // matchStateManager implements MatchStateManager
@@ -111,12 +111,12 @@ func NewMatchStateManager(logger *logrus.Logger) MatchStateManager {
 func (m *matchStateManager) CreateMatchState(ctx context.Context, matchID uuid.UUID, league string, players []*MatchPlayer) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	// Check if state already exists
 	if _, exists := m.states[matchID]; exists {
 		return fmt.Errorf("match state already exists for match %s", matchID)
 	}
-	
+
 	// Create player states
 	playerStates := make(map[uuid.UUID]*InMemoryPlayer)
 	for _, player := range players {
@@ -127,7 +127,7 @@ func (m *matchStateManager) CreateMatchState(ctx context.Context, matchID uuid.U
 			// Generate a temporary ID for ghosts
 			playerID = uuid.New()
 		}
-		
+
 		playerState := &InMemoryPlayer{
 			UserID:        player.UserID,
 			DisplayName:   player.DisplayName,
@@ -144,7 +144,7 @@ func (m *matchStateManager) CreateMatchState(ctx context.Context, matchID uuid.U
 		}
 		playerStates[playerID] = playerState
 	}
-	
+
 	// Create match state
 	matchState := &InMemoryMatchState{
 		MatchID:       matchID,
@@ -158,15 +158,15 @@ func (m *matchStateManager) CreateMatchState(ctx context.Context, matchID uuid.U
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
-	
+
 	m.states[matchID] = matchState
-	
+
 	m.logger.WithFields(logrus.Fields{
 		"match_id":     matchID,
 		"league":       league,
 		"player_count": len(players),
 	}).Info("Match state created")
-	
+
 	return nil
 }
 
@@ -174,20 +174,30 @@ func (m *matchStateManager) CreateMatchState(ctx context.Context, matchID uuid.U
 func (m *matchStateManager) GetMatchState(ctx context.Context, matchID uuid.UUID) (*InMemoryMatchState, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	state, exists := m.states[matchID]
 	if !exists {
 		return nil, fmt.Errorf("match state not found for match %s", matchID)
 	}
-	
+
 	// Return a copy to prevent external modifications
-	stateCopy := *state
-	stateCopy.Players = make(map[uuid.UUID]*InMemoryPlayer)
+	stateCopy := InMemoryMatchState{
+		MatchID:       state.MatchID,
+		League:        state.League,
+		Status:        state.Status,
+		CurrentHeat:   state.CurrentHeat,
+		HeatStatus:    state.HeatStatus,
+		HeatStartTime: state.HeatStartTime,
+		HeatEndTime:   state.HeatEndTime,
+		CreatedAt:     state.CreatedAt,
+		UpdatedAt:     state.UpdatedAt,
+		Players:       make(map[uuid.UUID]*InMemoryPlayer),
+	}
 	for id, player := range state.Players {
 		playerCopy := *player
 		stateCopy.Players[id] = &playerCopy
 	}
-	
+
 	return &stateCopy, nil
 }
 
@@ -195,25 +205,25 @@ func (m *matchStateManager) GetMatchState(ctx context.Context, matchID uuid.UUID
 func (m *matchStateManager) UpdateMatchStatus(ctx context.Context, matchID uuid.UUID, status MatchStatus) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	state, exists := m.states[matchID]
 	if !exists {
 		return fmt.Errorf("match state not found for match %s", matchID)
 	}
-	
+
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	
+
 	oldStatus := state.Status
 	state.Status = status
 	state.UpdatedAt = time.Now()
-	
+
 	m.logger.WithFields(logrus.Fields{
 		"match_id":   matchID,
 		"old_status": oldStatus,
 		"new_status": status,
 	}).Info("Match status updated")
-	
+
 	return nil
 }
 
@@ -222,18 +232,18 @@ func (m *matchStateManager) StartHeat(ctx context.Context, matchID uuid.UUID, he
 	if heat < 1 || heat > 3 {
 		return fmt.Errorf("invalid heat number: %d", heat)
 	}
-	
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	state, exists := m.states[matchID]
 	if !exists {
 		return fmt.Errorf("match state not found for match %s", matchID)
 	}
-	
+
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	
+
 	// Update heat state
 	state.CurrentHeat = heat
 	state.HeatStatus = HeatStatusCountdown
@@ -241,19 +251,19 @@ func (m *matchStateManager) StartHeat(ctx context.Context, matchID uuid.UUID, he
 	state.HeatStartTime = &now
 	state.HeatEndTime = nil
 	state.UpdatedAt = now
-	
+
 	// Reset player states for new heat
 	for _, player := range state.Players {
 		player.IsAlive = true
 		player.HasLocked = false
 		player.LockTime = nil
 	}
-	
+
 	m.logger.WithFields(logrus.Fields{
 		"match_id": matchID,
 		"heat":     heat,
 	}).Info("Heat started")
-	
+
 	return nil
 }
 
@@ -261,29 +271,29 @@ func (m *matchStateManager) StartHeat(ctx context.Context, matchID uuid.UUID, he
 func (m *matchStateManager) EndHeat(ctx context.Context, matchID uuid.UUID) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	state, exists := m.states[matchID]
 	if !exists {
 		return fmt.Errorf("match state not found for match %s", matchID)
 	}
-	
+
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	
+
 	// Update heat state
 	state.HeatStatus = HeatStatusCompleted
 	now := time.Now()
 	state.HeatEndTime = &now
 	state.UpdatedAt = now
-	
+
 	// Calculate positions for this heat
 	m.calculateHeatPositions(state)
-	
+
 	m.logger.WithFields(logrus.Fields{
 		"match_id": matchID,
 		"heat":     state.CurrentHeat,
 	}).Info("Heat ended")
-	
+
 	// If this was Heat 3, the match is complete
 	if state.CurrentHeat == 3 {
 		state.Status = MatchStatusCompleted
@@ -292,7 +302,7 @@ func (m *matchStateManager) EndHeat(ctx context.Context, matchID uuid.UUID) erro
 		// Transition to intermission
 		state.HeatStatus = HeatStatusIntermission
 	}
-	
+
 	return nil
 }
 
@@ -300,15 +310,15 @@ func (m *matchStateManager) EndHeat(ctx context.Context, matchID uuid.UUID) erro
 func (m *matchStateManager) LockPlayerScore(ctx context.Context, matchID, userID uuid.UUID, score decimal.Decimal) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	state, exists := m.states[matchID]
 	if !exists {
 		return fmt.Errorf("match state not found for match %s", matchID)
 	}
-	
+
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	
+
 	// Find player
 	var player *InMemoryPlayer
 	for id, p := range state.Players {
@@ -320,24 +330,24 @@ func (m *matchStateManager) LockPlayerScore(ctx context.Context, matchID, userID
 			break
 		}
 	}
-	
+
 	if player == nil {
 		return fmt.Errorf("player not found in match: %s", userID)
 	}
-	
+
 	if player.HasLocked {
 		return fmt.Errorf("player has already locked score for this heat")
 	}
-	
+
 	if state.HeatStatus != HeatStatusActive {
 		return fmt.Errorf("heat is not active")
 	}
-	
+
 	// Lock the score
 	now := time.Now()
 	player.HasLocked = true
 	player.LockTime = &now
-	
+
 	// Set score for current heat
 	switch state.CurrentHeat {
 	case 1:
@@ -347,19 +357,19 @@ func (m *matchStateManager) LockPlayerScore(ctx context.Context, matchID, userID
 	case 3:
 		player.Heat3Score = &score
 	}
-	
+
 	// Update total score
 	m.calculatePlayerTotalScore(player)
-	
+
 	state.UpdatedAt = now
-	
+
 	m.logger.WithFields(logrus.Fields{
 		"match_id": matchID,
 		"user_id":  userID,
 		"heat":     state.CurrentHeat,
 		"score":    score,
 	}).Info("Player score locked")
-	
+
 	return nil
 }
 
@@ -367,14 +377,14 @@ func (m *matchStateManager) LockPlayerScore(ctx context.Context, matchID, userID
 func (m *matchStateManager) GetActiveMatches(ctx context.Context) []uuid.UUID {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	var activeMatches []uuid.UUID
 	for matchID, state := range m.states {
 		if state.Status == MatchStatusInProgress {
 			activeMatches = append(activeMatches, matchID)
 		}
 	}
-	
+
 	return activeMatches
 }
 
@@ -382,20 +392,20 @@ func (m *matchStateManager) GetActiveMatches(ctx context.Context) []uuid.UUID {
 func (m *matchStateManager) RemoveMatchState(ctx context.Context, matchID uuid.UUID) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	delete(m.states, matchID)
-	
+
 	m.logger.WithFields(logrus.Fields{
 		"match_id": matchID,
 	}).Info("Match state removed from memory")
-	
+
 	return nil
 }
 
 // calculatePlayerTotalScore calculates a player's total score across all heats
 func (m *matchStateManager) calculatePlayerTotalScore(player *InMemoryPlayer) {
 	total := decimal.Zero
-	
+
 	if player.Heat1Score != nil {
 		total = total.Add(*player.Heat1Score)
 	}
@@ -405,7 +415,7 @@ func (m *matchStateManager) calculatePlayerTotalScore(player *InMemoryPlayer) {
 	if player.Heat3Score != nil {
 		total = total.Add(*player.Heat3Score)
 	}
-	
+
 	player.TotalScore = total
 }
 
@@ -416,7 +426,7 @@ func (m *matchStateManager) calculateHeatPositions(state *InMemoryMatchState) {
 		player *InMemoryPlayer
 		score  decimal.Decimal
 	}
-	
+
 	var players []playerScore
 	for _, player := range state.Players {
 		var score decimal.Decimal
@@ -434,13 +444,13 @@ func (m *matchStateManager) calculateHeatPositions(state *InMemoryMatchState) {
 				score = *player.Heat3Score
 			}
 		}
-		
+
 		players = append(players, playerScore{
 			player: player,
 			score:  score,
 		})
 	}
-	
+
 	// Sort by score (descending)
 	for i := 0; i < len(players)-1; i++ {
 		for j := i + 1; j < len(players); j++ {
@@ -449,7 +459,7 @@ func (m *matchStateManager) calculateHeatPositions(state *InMemoryMatchState) {
 			}
 		}
 	}
-	
+
 	// Assign positions
 	for i, ps := range players {
 		ps.player.Position = i + 1
@@ -463,7 +473,7 @@ func (m *matchStateManager) calculateFinalPositions(state *InMemoryMatchState) {
 		player *InMemoryPlayer
 		total  decimal.Decimal
 	}
-	
+
 	var players []playerTotal
 	for _, player := range state.Players {
 		m.calculatePlayerTotalScore(player)
@@ -472,7 +482,7 @@ func (m *matchStateManager) calculateFinalPositions(state *InMemoryMatchState) {
 			total:  player.TotalScore,
 		})
 	}
-	
+
 	// Sort by total score (descending), with tiebreaker logic
 	for i := 0; i < len(players)-1; i++ {
 		for j := i + 1; j < len(players); j++ {
@@ -481,7 +491,7 @@ func (m *matchStateManager) calculateFinalPositions(state *InMemoryMatchState) {
 			}
 		}
 	}
-	
+
 	// Assign final positions
 	for i, ps := range players {
 		ps.player.Position = i + 1
@@ -498,7 +508,7 @@ func (m *matchStateManager) shouldSwapPlayers(p1, p2 *InMemoryPlayer) bool {
 	if p1.TotalScore.LessThan(p2.TotalScore) {
 		return true // p2 is better
 	}
-	
+
 	// Total scores are equal, use tiebreaker
 	// Heat 3 tiebreaker
 	h1_h3 := decimal.Zero
@@ -509,14 +519,14 @@ func (m *matchStateManager) shouldSwapPlayers(p1, p2 *InMemoryPlayer) bool {
 	if p2.Heat3Score != nil {
 		h2_h3 = *p2.Heat3Score
 	}
-	
+
 	if h1_h3.GreaterThan(h2_h3) {
 		return false // p1 is better
 	}
 	if h1_h3.LessThan(h2_h3) {
 		return true // p2 is better
 	}
-	
+
 	// Heat 2 tiebreaker
 	h1_h2 := decimal.Zero
 	h2_h2 := decimal.Zero
@@ -526,14 +536,14 @@ func (m *matchStateManager) shouldSwapPlayers(p1, p2 *InMemoryPlayer) bool {
 	if p2.Heat2Score != nil {
 		h2_h2 = *p2.Heat2Score
 	}
-	
+
 	if h1_h2.GreaterThan(h2_h2) {
 		return false // p1 is better
 	}
 	if h1_h2.LessThan(h2_h2) {
 		return true // p2 is better
 	}
-	
+
 	// Heat 1 tiebreaker
 	h1_h1 := decimal.Zero
 	h2_h1 := decimal.Zero
@@ -543,6 +553,6 @@ func (m *matchStateManager) shouldSwapPlayers(p1, p2 *InMemoryPlayer) bool {
 	if p2.Heat1Score != nil {
 		h2_h1 = *p2.Heat1Score
 	}
-	
+
 	return h1_h1.LessThan(h2_h1) // p2 is better if their Heat 1 score is higher
 }
