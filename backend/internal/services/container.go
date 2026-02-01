@@ -158,7 +158,7 @@ func (c *Container) initializeServices() error {
 		c.UserRepo,
 		c.WalletRepo,
 		c.JWTManager,
-		"", // Bot token - should be added to config if needed
+		c.Config.TelegramBotToken,
 		c.Logger,
 	)
 
@@ -278,7 +278,7 @@ func (c *Container) runMigrations() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	migrationRunner := postgres.NewMigrationRunner(c.DB, c.Logger)
+	migrationRunner := postgres.NewMigrationRunner(c.DB, c.Config.DatabaseURL, c.Logger)
 
 	// Determine migrations directory path
 	// This assumes the migrations are in the standard location relative to the binary

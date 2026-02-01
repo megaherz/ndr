@@ -260,9 +260,6 @@ air
 # Unit tests
 make test
 
-# Integration tests (requires Docker)
-make test-integration
-
 # Test coverage
 make test-coverage
 ```
@@ -449,7 +446,6 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 | `make dev` | Start backend with live reload (air) |
 | `make build` | Build production binary |
 | `make test` | Run unit tests |
-| `make test-integration` | Run integration tests (dockertest) |
 | `make test-coverage` | Generate test coverage report |
 | `make lint` | Run golangci-lint |
 | `make migrate-up` | Apply all migrations |

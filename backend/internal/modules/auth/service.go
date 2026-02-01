@@ -72,6 +72,13 @@ func NewAuthService(
 
 // Authenticate validates Telegram initData and returns JWT tokens
 func (s *authService) Authenticate(ctx context.Context, initData string) (*AuthResult, error) {
+	// Debug logging for bot token (only log length for security)
+	s.logger.WithFields(logrus.Fields{
+		"bot_token_length": len(s.botToken),
+		"bot_token_empty":  s.botToken == "",
+		"init_data_length": len(initData),
+	}).Debug("Authenticating with Telegram")
+
 	// Validate Telegram initData
 	telegramData, err := ValidateTelegramInitData(initData, s.botToken)
 	if err != nil {
