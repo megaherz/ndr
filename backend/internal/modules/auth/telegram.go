@@ -82,17 +82,7 @@ func ValidateTelegramInitData(initData, botToken string) (*TelegramInitData, err
 
 	// Verify hash
 	if !hmac.Equal([]byte(hash), []byte(expectedHashHex)) {
-		// Debug logging for hash mismatch
-		fmt.Printf("DEBUG: Hash validation failed\n")
-		fmt.Printf("DEBUG: Received hash: %s\n", hash)
-		fmt.Printf("DEBUG: Expected hash: %s\n", expectedHashHex)
-		fmt.Printf("DEBUG: Data check string:\n%s\n", dataCheckString)
-		fmt.Printf("DEBUG: Bot token: %s\n", botToken)
-		fmt.Printf("DEBUG: Original initData: %s\n", initData)
-		
-		// TEMPORARY: Skip hash validation for debugging
-		fmt.Printf("DEBUG: TEMPORARILY SKIPPING HASH VALIDATION FOR TESTING\n")
-		// return nil, ErrInvalidHash
+		return nil, ErrInvalidHash
 	}
 
 	// Parse auth_date

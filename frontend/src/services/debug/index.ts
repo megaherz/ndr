@@ -139,8 +139,6 @@ export const debugUtils = {
           const initData = telegram?.WebApp?.initData
           
           if (initData) {
-            console.log(`${endpoint.name}: 📤 Sending Telegram init data (length: ${initData.length})`)
-            console.log(`  Init data preview: ${initData.substring(0, 100)}...`)
             options.body = JSON.stringify({ init_data: initData })
           } else {
             console.log(`${endpoint.name}: ⚠️ Skipped (no Telegram init data available)`)
@@ -246,37 +244,6 @@ export const debugUtils = {
     console.groupEnd()
   },
 
-  // Manual hash validation test
-  testTelegramHash: async () => {
-    const telegram = (window as unknown as { Telegram?: { WebApp: { initData?: string } } }).Telegram
-    const initData = telegram?.WebApp?.initData
-    
-    if (!initData) {
-      console.log('❌ No Telegram init data available')
-      return
-    }
-    
-    console.group('🔐 Telegram Hash Validation Test')
-    console.log('Init Data:', initData)
-    
-    // Parse the init data
-    const params = new URLSearchParams(initData)
-    const hash = params.get('hash')
-    
-    // Create data check string (same logic as backend)
-    const pairs = initData.split('&')
-    const dataPairs = pairs.filter(pair => !pair.startsWith('hash='))
-    dataPairs.sort()
-    const dataCheckString = dataPairs.join('\n')
-    
-    console.log('Hash from Telegram:', hash)
-    console.log('Data check string:', dataCheckString)
-    console.log('Data pairs:', dataPairs)
-    
-    // Note: We can't calculate the expected hash here because we don't have the bot token
-    // But we can at least verify the data structure
-    console.groupEnd()
-  },
 
   // Show all available debug commands
   help: () => {
@@ -293,7 +260,6 @@ export const debugUtils = {
     console.log('debugUtils.env() - Log environment')
     console.log('debugUtils.api() - Test API connectivity')
     console.log('debugUtils.backend() - Detailed backend diagnostics')
-    console.log('debugUtils.testTelegramHash() - Test Telegram hash validation')
     console.log('debugUtils.clearStorage() - Clear all storage')
     console.log('debugUtils.help() - Show this help')
     console.groupEnd()
