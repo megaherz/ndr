@@ -1,0 +1,306 @@
+/* Racing-inspired LeagueCard with automotive aesthetics */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+
+.league-card {
+  position: relative;
+  background: var(--league-bg-gradient);
+  border: 2px solid var(--league-border-color);
+  border-radius: 16px;
+  padding: 24px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  overflow: hidden;
+  
+  /* Racing-style glow effect */
+  box-shadow: 
+    0 0 20px var(--league-shadow-color),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  
+  /* Subtle texture overlay */
+  background-image: 
+    var(--league-bg-gradient),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+}
+
+.league-card:hover:not(.league-card--disabled) {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 0 30px var(--league-shadow-color),
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border-color: var(--league-color);
+}
+
+.league-card--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+}
+
+/* Racing stripe decoration */
+.league-card__stripe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--league-color) 20%,
+    var(--league-color) 80%,
+    transparent 100%
+  );
+  animation: pulse-stripe 2s ease-in-out infinite;
+}
+
+@keyframes pulse-stripe {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* Header section */
+.league-card__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.league-card__icon {
+  font-size: 32px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-2px); }
+}
+
+.league-card__title-group {
+  flex: 1;
+}
+
+.league-card__title {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 20px;
+  color: var(--league-color);
+  margin: 0;
+  text-shadow: 
+    0 0 10px var(--league-shadow-color),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.league-card__subtitle {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 2px 0 0 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* Stats section */
+.league-card__stats {
+  display: flex;
+  gap: 24px;
+  margin: 8px 0;
+}
+
+.league-card__stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.league-card__stat-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.league-card__stat-value {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.league-card__stat-value--insufficient {
+  color: #ff4757;
+  animation: warning-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes warning-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Description */
+.league-card__description {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
+}
+
+/* Action button */
+.league-card__button {
+  position: relative;
+  background: linear-gradient(135deg, var(--league-color) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border: 1px solid var(--league-color);
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  
+  /* Racing button glow */
+  box-shadow: 
+    0 0 15px var(--league-shadow-color),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.league-card__button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
+}
+
+.league-card__button:hover:not(.league-card__button--disabled)::before {
+  left: 100%;
+}
+
+.league-card__button:hover:not(.league-card__button--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 0 25px var(--league-shadow-color),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.league-card__button:active:not(.league-card__button--disabled) {
+  transform: translateY(0);
+}
+
+.league-card__button--disabled {
+  background: linear-gradient(135deg, #666666 0%, #333333 100%);
+  border-color: #666666;
+  color: #cccccc;
+  cursor: not-allowed;
+  box-shadow: 
+    0 0 5px rgba(102, 102, 102, 0.3),
+    0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.league-card__button-text {
+  position: relative;
+  z-index: 1;
+}
+
+.league-card__button-icon {
+  position: relative;
+  z-index: 1;
+  font-size: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* Disabled overlay */
+.league-card__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(1px);
+  border-radius: 14px;
+  pointer-events: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .league-card {
+    padding: 20px;
+    min-height: 260px;
+  }
+  
+  .league-card__title {
+    font-size: 18px;
+  }
+  
+  .league-card__stats {
+    gap: 16px;
+  }
+  
+  .league-card__stat-value {
+    font-size: 13px;
+  }
+  
+  .league-card__button {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .league-card {
+    padding: 16px;
+    min-height: 240px;
+  }
+  
+  .league-card__header {
+    gap: 12px;
+  }
+  
+  .league-card__icon {
+    font-size: 28px;
+  }
+  
+  .league-card__title {
+    font-size: 16px;
+  }
+  
+  .league-card__subtitle {
+    font-size: 11px;
+  }
+}

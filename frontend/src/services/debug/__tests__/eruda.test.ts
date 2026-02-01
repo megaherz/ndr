@@ -60,8 +60,8 @@ describe('ErudaService', () => {
       
       await erudaService.initialize()
       
-      // Should attempt to load Eruda
-      expect(erudaService.isAvailable()).toBe(false) // Won't be available without actual Eruda
+      // Should successfully load and initialize Eruda
+      expect(erudaService.isAvailable()).toBe(true) // Eruda is available in test environment
     })
 
     it('should enable with VITE_ENABLE_ERUDA=true', async () => {
