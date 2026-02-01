@@ -1,17 +1,13 @@
 package auth
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	initdata "github.com/telegram-mini-apps/init-data-golang"
 )
 
 var (
@@ -39,109 +35,61 @@ type TelegramInitData struct {
 }
 
 // ValidateTelegramInitData validates the Telegram Web App initData
-// according to the official Telegram documentation
-func ValidateTelegramInitData(initData, botToken string) (*TelegramInitData, error) {
-	if initData == "" {
+// using the official telegram-mini-apps/init-data-golang package
+func ValidateTelegramInitData(initDataRaw, botToken string) (*TelegramInitData, error) {
+	if initDataRaw == "" {
 		return nil, ErrInvalidInitData
 	}
 
-	// Parse the URL-encoded initData
-	values, err := url.ParseQuery(initData)
+	// Extract bot ID from bot token (format: "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11")
+	parts := strings.Split(botToken, ":")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid bot token format")
+	}
+
+	botID, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid bot ID in token: %w", err)
+	}
+
+	// Set expiration time to 24 hours
+	expIn := 24 * time.Hour
+
+	// Try both validation methods since we have both hash and signature fields
+
+	// First, try regular bot token validation
+	err = initdata.Validate(initDataRaw, botToken, expIn)
+	if err != nil {
+		// Try third-party validation with bot ID
+		err = initdata.ValidateThirdParty(initDataRaw, botID, expIn)
+		if err != nil {
+			return nil, fmt.Errorf("validation failed with both methods: %w", err)
+		}
+	}
+
+	// Parse the validated initData
+	parsedData, err := initdata.Parse(initDataRaw)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse init data: %w", err)
 	}
 
-	// Extract hash
-	hash := values.Get("hash")
-	if hash == "" {
-		return nil, ErrInvalidHash
-	}
-
-	// Create data check string using original encoded values
-	// We need to reconstruct from the original initData string to preserve encoding
-	// Exclude both 'hash=' and 'signature=' fields from validation
-	pairs := strings.Split(initData, "&")
-	var dataPairs []string
-	for _, pair := range pairs {
-		if !strings.HasPrefix(pair, "hash=") && !strings.HasPrefix(pair, "signature=") {
-			dataPairs = append(dataPairs, pair)
-		}
-	}
-	sort.Strings(dataPairs)
-	dataCheckString := strings.Join(dataPairs, "\n")
-
-	// Create secret key
-	secretKey := hmac.New(sha256.New, []byte("WebAppData"))
-	secretKey.Write([]byte(botToken))
-	secret := secretKey.Sum(nil)
-
-	// Calculate expected hash
-	expectedHash := hmac.New(sha256.New, secret)
-	expectedHash.Write([]byte(dataCheckString))
-	expectedHashHex := hex.EncodeToString(expectedHash.Sum(nil))
-
-	// Verify hash
-	if !hmac.Equal([]byte(hash), []byte(expectedHashHex)) {
-		return nil, ErrInvalidHash
-	}
-
-	// Parse auth_date
-	authDateStr := values.Get("auth_date")
-	if authDateStr == "" {
+	// Convert to our internal format
+	if parsedData.User.ID == 0 {
 		return nil, ErrMissingRequiredData
 	}
 
-	authDate, err := strconv.ParseInt(authDateStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("invalid auth_date: %w", err)
-	}
-
-	// Check if data is not too old (24 hours)
-	if time.Now().Unix()-authDate > 86400 {
-		return nil, ErrExpiredInitData
-	}
-
-	// Parse user data
-	userStr := values.Get("user")
-	if userStr == "" {
-		return nil, ErrMissingRequiredData
-	}
-
-	// Parse user JSON manually (simple parsing for required fields)
-	user, err := parseTelegramUser(userStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse user data: %w", err)
+	user := &TelegramUser{
+		ID:        parsedData.User.ID,
+		Username:  parsedData.User.Username,
+		FirstName: parsedData.User.FirstName,
+		LastName:  parsedData.User.LastName,
+		PhotoURL:  parsedData.User.PhotoURL,
 	}
 
 	return &TelegramInitData{
 		User:     user,
-		AuthDate: authDate,
-		Hash:     hash,
-		QueryID:  values.Get("query_id"),
+		AuthDate: parsedData.AuthDate().Unix(),
+		Hash:     parsedData.Hash,
+		QueryID:  parsedData.QueryID,
 	}, nil
-}
-
-// parseTelegramUser parses the user JSON string from Telegram initData
-func parseTelegramUser(userJSON string) (*TelegramUser, error) {
-	// Decode URL-encoded JSON
-	decoded, err := url.QueryUnescape(userJSON)
-	if err != nil {
-		return nil, fmt.Errorf("failed to URL decode user JSON: %w", err)
-	}
-
-	// Parse JSON properly
-	var user TelegramUser
-	if err := json.Unmarshal([]byte(decoded), &user); err != nil {
-		return nil, fmt.Errorf("failed to parse user JSON: %w", err)
-	}
-
-	// Validate required fields
-	if user.ID == 0 {
-		return nil, errors.New("missing or invalid user ID")
-	}
-	if user.FirstName == "" {
-		return nil, errors.New("missing first_name")
-	}
-
-	return &user, nil
 }
