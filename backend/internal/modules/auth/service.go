@@ -28,11 +28,15 @@ type AuthService interface {
 
 // AuthResult represents the result of a successful authentication
 type AuthResult struct {
-	User         *models.User `json:"user"`
-	AccessToken  string       `json:"access_token"`
-	RefreshToken string       `json:"refresh_token"`
-	ExpiresIn    int64        `json:"expires_in"` // Access token expiry in seconds
-	TokenType    string       `json:"token_type"` // "Bearer"
+	User   *models.User `json:"user"`
+	Tokens TokenPair    `json:"tokens"`
+}
+
+// TokenPair represents the token pair returned to the frontend
+type TokenPair struct {
+	AppToken        string `json:"app_token"`
+	CentrifugoToken string `json:"centrifugo_token"`
+	ExpiresAt       string `json:"expires_at"` // ISO 8601 timestamp
 }
 
 // TokenClaims represents the claims in a JWT token
@@ -132,12 +136,16 @@ func (s *authService) Authenticate(ctx context.Context, initData string) (*AuthR
 		"telegram_id": telegramData.User.ID,
 	}).Info("User authenticated successfully")
 
+	// Calculate expiration time (24 hours from now for app token)
+	expiresAt := time.Now().Add(24 * time.Hour)
+
 	return &AuthResult{
-		User:         user,
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpiresIn:    3600, // 1 hour
-		TokenType:    "Bearer",
+		User: user,
+		Tokens: TokenPair{
+			AppToken:        accessToken,
+			CentrifugoToken: refreshToken,
+			ExpiresAt:       expiresAt.Format(time.RFC3339),
+		},
 	}, nil
 }
 
@@ -194,12 +202,16 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*A
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
+	// Calculate expiration time (24 hours from now for app token)
+	expiresAt := time.Now().Add(24 * time.Hour)
+
 	return &AuthResult{
-		User:         user,
-		AccessToken:  accessToken,
-		RefreshToken: newRefreshToken,
-		ExpiresIn:    3600, // 1 hour
-		TokenType:    "Bearer",
+		User: user,
+		Tokens: TokenPair{
+			AppToken:        accessToken,
+			CentrifugoToken: newRefreshToken,
+			ExpiresAt:       expiresAt.Format(time.RFC3339),
+		},
 	}, nil
 }
 

@@ -19,4 +19,9 @@ export default defineConfig({
   optimizeDeps: {
     include: ['pixi.js'],
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.ts'],
+  },
 })

@@ -142,10 +142,10 @@
 - [x] T065 [P] [US1] Implement Telegram initData extraction in frontend/src/services/auth/telegram.ts
 - [x] T066 [US1] Create login API call in frontend/src/services/api/auth.ts (POST /api/v1/auth/telegram)
 - [x] T067 [US1] Implement automatic authentication on app launch in frontend/src/App.tsx (extract initData, call auth API, store tokens)
-- [ ] T068 [P] [US1] Create wallet store in frontend/src/stores/walletStore.ts (balances, league access)
-- [ ] T069 [US1] Create garage API call in frontend/src/services/api/garage.ts (GET /api/v1/garage)
-- [ ] T070 [US1] Create Garage page component in frontend/src/pages/Garage.tsx (league selector, balances, "RACE NOW")
-- [ ] T071 [US1] Create league card components in frontend/src/components/garage/LeagueCard.tsx
+- [x] T068 [P] [US1] Create wallet store in frontend/src/stores/walletStore.ts (balances, league access)
+- [x] T069 [US1] Create garage API call in frontend/src/services/api/garage.ts (GET /api/v1/garage)
+- [x] T070 [US1] Create Garage page component in frontend/src/pages/Garage.tsx (league selector, balances, "RACE NOW")
+- [x] T071 [US1] Create league card components in frontend/src/components/garage/LeagueCard.tsx
 
 **Frontend: Matchmaking**
 
