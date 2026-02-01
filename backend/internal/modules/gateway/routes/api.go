@@ -32,7 +32,7 @@ func SetupRoutes(container *services.Container, logger *logrus.Logger) chi.Route
 	authHandler := httpHandlers.NewAuthHandler(container.AuthService, logger)
 	healthHandler := httpHandlers.NewHealthHandler(container, logger)
 	walletHandler := httpHandlers.NewWalletHandler(container.AccountService, logger)
-	garageHandler := httpHandlers.NewGarageHandler(container.AccountService, logger)
+	garageHandler := httpHandlers.NewGarageHandler(container.AccountService, container.UserRepo, logger)
 
 	// Health check endpoint (outside of API versioning)
 	healthHandler.RegisterRoutes(r)

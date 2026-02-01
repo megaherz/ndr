@@ -1,4 +1,4 @@
-import { apiClient, queryKeys } from './client'
+import { apiClient, queryKeys, APIResponse } from './client'
 import { Decimal } from 'decimal.js'
 
 // Types based on the garage.json contract
@@ -47,20 +47,42 @@ export interface TransformedGarageData {
  * GET /api/v1/garage
  */
 export const fetchGarageState = async (): Promise<TransformedGarageData> => {
-  const response = await apiClient.get<GarageResponse>('/garage')
-  
-  // Transform decimal strings to Decimal objects for consistent handling
-  return {
-    user: response.user,
-    wallet: {
-      fuelBalance: new Decimal(response.wallet.fuel_balance),
-      burnBalance: new Decimal(response.wallet.burn_balance),
-      rookieRacesCompleted: response.wallet.rookie_races_completed,
-    },
-    leagues: response.leagues.map(league => ({
-      ...league,
-      buyin: new Decimal(league.buyin),
-    })),
+  try {
+    // API client returns the full response: { success: true, data: {...}, timestamp: "..." }
+    const apiResponse = await apiClient.get<APIResponse<GarageResponse>>('/garage')
+    
+    // Log the raw response for debugging
+    console.log('Raw garage API response:', apiResponse)
+    
+    // Extract the garage data from the API response
+    const garageData = (apiResponse as any).data as GarageResponse
+    
+    console.log('Extracted garage data:', garageData)
+    
+    // Validate response structure
+    if (!garageData || !garageData.user || !garageData.wallet || !garageData.leagues) {
+      throw new Error(`Invalid garage response structure. Expected data with user, wallet, leagues. Got: ${JSON.stringify(garageData)}`)
+    }
+    
+    // Transform decimal strings to Decimal objects for consistent handling
+    const transformedData = {
+      user: garageData.user,
+      wallet: {
+        fuelBalance: new Decimal(garageData.wallet.fuel_balance || '0'),
+        burnBalance: new Decimal(garageData.wallet.burn_balance || '0'),
+        rookieRacesCompleted: garageData.wallet.rookie_races_completed || 0,
+      },
+      leagues: garageData.leagues.map((league) => ({
+        ...league,
+        buyin: new Decimal(league.buyin || '0'),
+      })),
+    }
+    
+    console.log('Successfully transformed garage data:', transformedData)
+    return transformedData
+  } catch (error) {
+    console.error('Error in fetchGarageState:', error)
+    throw error
   }
 }
 
