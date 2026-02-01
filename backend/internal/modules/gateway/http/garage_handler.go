@@ -7,13 +7,20 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 
 	"github.com/megaherz/ndr/internal/constants"
 	"github.com/megaherz/ndr/internal/modules/account"
 	"github.com/megaherz/ndr/internal/storage/postgres/models"
 	"github.com/megaherz/ndr/internal/storage/postgres/repository"
+)
+
+// Context key type to match middleware
+type contextKey string
+
+const (
+	userIDKey contextKey = "user_id"
 )
 
 // GarageResponse represents the garage API response
@@ -141,7 +148,7 @@ func (h *GarageHandler) getUserIDFromContext(r *http.Request) (uuid.UUID, error)
 	// For now, we'll return a placeholder
 
 	// Check if user_id is set in context (by auth middleware)
-	userIDValue := r.Context().Value("user_id")
+	userIDValue := r.Context().Value(userIDKey)
 	if userIDValue == nil {
 		return uuid.Nil, fmt.Errorf("user ID not found in context")
 	}
@@ -159,12 +166,12 @@ func getDisplayName(user *models.User) string {
 	if user.TelegramUsername != nil && *user.TelegramUsername != "" {
 		return *user.TelegramUsername
 	}
-	
+
 	displayName := user.TelegramFirstName
 	if user.TelegramLastName != nil && *user.TelegramLastName != "" {
 		displayName += " " + *user.TelegramLastName
 	}
-	
+
 	return displayName
 }
 
@@ -177,7 +184,7 @@ func buildLeaguesList(walletInfo *account.WalletInfo) []GarageLeague {
 			Available: true,
 		},
 		{
-			Name:      "STREET", 
+			Name:      "STREET",
 			Buyin:     constants.LeagueBuyins["STREET"].String(),
 			Available: true,
 		},

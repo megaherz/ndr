@@ -12,6 +12,15 @@ import (
 	httpHandlers "github.com/megaherz/ndr/internal/modules/gateway/http"
 )
 
+// Context key types to avoid collisions
+type contextKey string
+
+const (
+	userIDKey     contextKey = "user_id"
+	telegramIDKey contextKey = "telegram_id"
+	tokenTypeKey  contextKey = "token_type"
+)
+
 // JWTAuth creates a JWT authentication middleware
 func JWTAuth(jwtManager *auth.JWTManager, logger *logrus.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -54,9 +63,9 @@ func JWTAuth(jwtManager *auth.JWTManager, logger *logrus.Logger) func(http.Handl
 			}
 
 			// Add user information to context
-			ctx := context.WithValue(r.Context(), "user_id", claims.UserID)
-			ctx = context.WithValue(ctx, "telegram_id", claims.TelegramID)
-			ctx = context.WithValue(ctx, "token_type", claims.TokenType)
+			ctx := context.WithValue(r.Context(), userIDKey, claims.UserID)
+			ctx = context.WithValue(ctx, telegramIDKey, claims.TelegramID)
+			ctx = context.WithValue(ctx, tokenTypeKey, claims.TokenType)
 
 			// Log successful authentication
 			logger.WithFields(logrus.Fields{

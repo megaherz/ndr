@@ -20,31 +20,35 @@ describe('Garage API Service', () => {
 
   describe('fetchGarageState', () => {
     it('should fetch and transform garage state correctly', async () => {
-      // Mock API response
+      // Mock API response with full API response structure
       const mockApiResponse = {
-        user: {
-          id: 'test-user-id',
-          display_name: 'Test User',
-        },
-        wallet: {
-          fuel_balance: '100.50',
-          burn_balance: '25.75',
-          rookie_races_completed: 2,
-        },
-        leagues: [
-          {
-            name: 'ROOKIE' as const,
-            buyin: '10.00',
-            available: true,
-            unavailable_reason: null,
+        success: true,
+        data: {
+          user: {
+            id: 'test-user-id',
+            display_name: 'Test User',
           },
-          {
-            name: 'STREET' as const,
-            buyin: '50.00',
-            available: false,
-            unavailable_reason: 'INSUFFICIENT_BALANCE',
+          wallet: {
+            fuel_balance: '100.50',
+            burn_balance: '25.75',
+            rookie_races_completed: 2,
           },
-        ],
+          leagues: [
+            {
+              name: 'ROOKIE' as const,
+              buyin: '10.00',
+              available: true,
+              unavailable_reason: null,
+            },
+            {
+              name: 'STREET' as const,
+              buyin: '50.00',
+              available: false,
+              unavailable_reason: 'INSUFFICIENT_BALANCE',
+            },
+          ],
+        },
+        timestamp: '2026-02-01T16:00:00Z',
       }
 
       vi.mocked(apiClient.get).mockResolvedValue(mockApiResponse)

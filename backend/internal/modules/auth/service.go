@@ -34,9 +34,9 @@ type AuthResult struct {
 
 // TokenPair represents the token pair returned to the frontend
 type TokenPair struct {
-	AppToken       string `json:"app_token"`
+	AppToken        string `json:"app_token"`
 	CentrifugoToken string `json:"centrifugo_token"`
-	ExpiresAt      string `json:"expires_at"` // ISO 8601 timestamp
+	ExpiresAt       string `json:"expires_at"` // ISO 8601 timestamp
 }
 
 // TokenClaims represents the claims in a JWT token

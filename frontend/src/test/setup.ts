@@ -1,5 +1,8 @@
 import '@testing-library/jest-dom'
 
+// Import the existing eruda types from the debug service
+// The Window interface is already extended in src/services/debug/eruda.ts
+
 // Mock localStorage for tests
 const localStorageMock = (() => {
   let store: Record<string, string> = {}
@@ -142,5 +145,5 @@ beforeEach(() => {
   sessionStorageMock.clear.mockClear()
   
   // Reset eruda mock
-  delete (window as any).eruda
+  delete window.eruda
 })
